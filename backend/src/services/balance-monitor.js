@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('BalanceMonitor');
 /**
  * Monitor de saldos de proveedores (Twilio, Deepgram, Anthropic, OpenAI).
  *
@@ -146,7 +149,7 @@ async function checkAndNotify(db, redis) {
             link: '/pages/admin/operations.php',
           });
         }
-      } catch (e) { console.warn('[BalanceMonitor] no se pudo notificar:', e.message); }
+      } catch (e) { log.warn('[BalanceMonitor] no se pudo notificar:', e.message); }
     }
     last[p.provider] = p.status;
   }

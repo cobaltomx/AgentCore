@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../logger');
+const log = logger('UsageTracker');
 /**
  * Usage Tracker — Fase 6
  *
@@ -53,7 +56,7 @@ class UsageTracker {
     // Reportar excedente a Stripe si aplica
     if (overage > 0) {
       this.stripeService.reportUsage(tenantId, overage).catch(err => {
-        console.error(`[UsageTracker] Error reportando a Stripe:`, err.message);
+        log.error(`[UsageTracker] Error reportando a Stripe:`, err.message);
       });
     }
 
@@ -93,7 +96,7 @@ class UsageTracker {
       `UPDATE tenants SET minutes_used_mo = 0 WHERE status = 'active'
        RETURNING id, slug`
     );
-    console.log(`[UsageTracker] Reset de uso para ${result.rowCount} tenants`);
+    log.info(`[UsageTracker] Reset de uso para ${result.rowCount} tenants`);
     return result.rows;
   }
 }

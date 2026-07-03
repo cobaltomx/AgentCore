@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../logger');
+const log = logger('Stripe');
 /**
  * Stripe Billing Service — Fase 6
  *
@@ -180,7 +183,7 @@ class StripeService {
 
     const sub = subResult.rows[0];
     if (!sub?.stripe_subscription_id || !sub?.stripe_meter_item_id) {
-      console.warn(`[Stripe] Sin suscripción activa para tenant ${tenantId}`);
+      log.warn(`[Stripe] Sin suscripción activa para tenant ${tenantId}`);
       return null;
     }
 
@@ -231,7 +234,7 @@ class StripeService {
       throw new Error(`Webhook signature inválida: ${err.message}`);
     }
 
-    console.log(`[Stripe Webhook] ${event.type}`);
+    log.info(`[Stripe Webhook] ${event.type}`);
 
     switch (event.type) {
 
@@ -276,7 +279,7 @@ class StripeService {
         break;
 
       default:
-        console.log(`[Stripe Webhook] Evento ignorado: ${event.type}`);
+        log.info(`[Stripe Webhook] Evento ignorado: ${event.type}`);
     }
 
     return { received: true, type: event.type };
@@ -376,7 +379,7 @@ class StripeService {
       ]
     );
 
-    console.log(`[Stripe] Tenant ${tenantId} activado en plan ${planKey}`);
+    log.info(`[Stripe] Tenant ${tenantId} activado en plan ${planKey}`);
   }
 
   async _handleSubscriptionUpdated(subscription) {
@@ -463,7 +466,7 @@ class StripeService {
       [tenantId]
     );
 
-    console.warn(`[Stripe] Pago fallido para tenant ${tenantId}`);
+    log.warn(`[Stripe] Pago fallido para tenant ${tenantId}`);
   }
 }
 

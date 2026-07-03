@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('Waitlist');
 /**
  * Lista de espera (Fase 1.3). Reusa: `leads` (cliente), `sendWhatsAppTracked`
  * + `getWhatsAppFrom` + `toWhatsAppMx` (envío), y se dispara desde
@@ -68,10 +71,10 @@ async function fillFromCancelledSlot(db, tenantId, appt) {
       "UPDATE waitlist SET status='notified', notified_at=now() WHERE id=$1",
       [w.id]
     );
-    console.log(`[waitlist] Hueco liberado → notificado ${w.name} (${w.phone}) · WhatsApp ${sent ? 'enviado' : 'no entregado'}`);
+    log.info(`[waitlist] Hueco liberado → notificado ${w.name} (${w.phone}) · WhatsApp ${sent ? 'enviado' : 'no entregado'}`);
     return { filled: true, waitlistId: w.id, notified: w.name, whatsappSent: sent };
   } catch (e) {
-    console.warn('[waitlist] fillFromCancelledSlot falló:', e.message);
+    log.warn('[waitlist] fillFromCancelledSlot falló:', e.message);
     return { filled: false, error: e.message };
   }
 }

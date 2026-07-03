@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('ConvAnalyzer');
 /**
  * ConversationAnalyzer — "Voz del cliente"
  *
@@ -78,7 +81,7 @@ async function analyzeConversation(db, conversationId) {
     });
     result = _parseJson(llm.content);
   } catch (err) {
-    console.warn('[ConvAnalyzer] LLM error:', err.message);
+    log.warn('[ConvAnalyzer] LLM error:', err.message);
     return null;
   }
 
@@ -125,7 +128,7 @@ function analyzeInBackground(db, conversationId) {
     try {
       await analyzeConversation(db, conversationId);
     } catch (err) {
-      console.warn('[ConvAnalyzer] background error:', err.message);
+      log.warn('[ConvAnalyzer] background error:', err.message);
     }
   });
 }

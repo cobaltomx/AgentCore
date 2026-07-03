@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../logger');
+const log = logger('Scheduling');
 /**
  * SchedulingService — Fase 2
  *
@@ -78,7 +81,7 @@ class SchedulingService {
         const slots     = await eaClient.getAvailableSlots({ startDate, endDate, timezone: tz });
         return { slots: spreadAcrossDays(slots, maxSlots), source: 'easyappointments', total: slots.length };
       } catch (eaErr) {
-        console.warn(`[Scheduling] EA propio falló para ${tenantId}, sigo con config del dashboard:`, eaErr.message);
+        log.warn(`[Scheduling] EA propio falló para ${tenantId}, sigo con config del dashboard:`, eaErr.message);
       }
     }
 
@@ -185,10 +188,10 @@ class SchedulingService {
         externalSource = 'easyappointments';
         durationMins   = eaClient.slotDurationMins;
 
-        console.log(`[Scheduling] Cita creada en EA: id=${booking.id}`);
+        log.info(`[Scheduling] Cita creada en EA: id=${booking.id}`);
 
       } catch (eaErr) {
-        console.warn(`[Scheduling] EA booking falló, guardando solo en DB:`, eaErr.message);
+        log.warn(`[Scheduling] EA booking falló, guardando solo en DB:`, eaErr.message);
         // No lanzar error — nuestra DB es la fuente de verdad
       }
     }
@@ -202,7 +205,7 @@ class SchedulingService {
         [conversationId]
       );
       if (dup.rows[0]) {
-        console.log(`[Scheduling] Cita duplicada bloqueada — conversationId ${conversationId} ya tiene appointmentId ${dup.rows[0].id}`);
+        log.info(`[Scheduling] Cita duplicada bloqueada — conversationId ${conversationId} ya tiene appointmentId ${dup.rows[0].id}`);
         return {
           ...dup.rows[0],
           displayTime:    formatSlotDisplay(dup.rows[0].scheduled_at, tz),
@@ -280,9 +283,9 @@ class SchedulingService {
       if (eaClient) {
         try {
           await eaClient.cancelBooking(appt.external_ref);
-          console.log(`[Scheduling] Cita ${appt.external_ref} cancelada en EA`);
+          log.info(`[Scheduling] Cita ${appt.external_ref} cancelada en EA`);
         } catch (err) {
-          console.warn('[Scheduling] EA cancel falló:', err.message);
+          log.warn('[Scheduling] EA cancel falló:', err.message);
         }
       }
     }

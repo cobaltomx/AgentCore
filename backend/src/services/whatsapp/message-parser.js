@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../logger');
+const log = logger('MsgParser');
 /**
  * WhatsApp Message Parser — Fase 3
  *
@@ -57,7 +60,7 @@ function parseWebhookPayload(body) {
     };
 
   } catch (err) {
-    console.error('[WA Parser] Error parseando webhook:', err.message);
+    log.error('[WA Parser] Error parseando webhook:', err.message);
     return null;
   }
 }

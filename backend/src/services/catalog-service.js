@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('Catalog');
 /**
  * CatalogService — conversational commerce
  *
@@ -192,7 +195,7 @@ class CatalogService {
           [orderId, session.id, session.url]
         );
       } catch (err) {
-        console.warn('[checkout] Stripe no disponible, sigue como pago en entrega:', err.message);
+        log.warn('[checkout] Stripe no disponible, sigue como pago en entrega:', err.message);
       }
     }
 

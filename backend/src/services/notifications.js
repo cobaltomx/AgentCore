@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('Notifications');
 /**
  * Helper para crear notificaciones en DB.
  * Non-fatal: los errores se loguean pero nunca interrumpen el flujo principal.
@@ -21,7 +24,7 @@ async function createNotification(db, { tenantId, type, title, body = null, link
     );
   } catch (err) {
     // No relanzar — las notificaciones son un nice-to-have
-    console.error('[notifications] createNotification error:', err.message);
+    log.error('[notifications] createNotification error:', err.message);
   }
 }
 

@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../logger');
+const log = logger('CampaignWorker');
 /**
  * Campaign Worker — Fase 7
  *
@@ -39,13 +42,13 @@ class CampaignWorker {
     if (this.running) return;
     this.running   = true;
     this._interval = setInterval(() => this._tick(), intervalMs);
-    console.log('[CampaignWorker] Iniciado — tick cada', intervalMs / 1000, 's');
+    log.info('[CampaignWorker] Iniciado — tick cada', intervalMs / 1000, 's');
   }
 
   stop() {
     this.running = false;
     if (this._interval) clearInterval(this._interval);
-    console.log('[CampaignWorker] Detenido');
+    log.info('[CampaignWorker] Detenido');
   }
 
   /**
@@ -69,7 +72,7 @@ class CampaignWorker {
 
       for (const campaign of result.rows) {
         await this._processCampaign(campaign).catch(err => {
-          console.error(`[CampaignWorker] Error en campaña ${campaign.id}:`, err.message);
+          log.error(`[CampaignWorker] Error en campaña ${campaign.id}:`, err.message);
         });
       }
 
@@ -77,12 +80,12 @@ class CampaignWorker {
       const tickCount = parseInt(await this.redis.incr('worker:tick_count') || '0');
       if (tickCount % 10 === 0) {
         await this.manager.processTriggers().catch(err => {
-          console.error('[CampaignWorker] Error procesando triggers:', err.message);
+          log.error('[CampaignWorker] Error procesando triggers:', err.message);
         });
       }
 
     } catch (err) {
-      console.error('[CampaignWorker] Error en tick:', err.message);
+      log.error('[CampaignWorker] Error en tick:', err.message);
     }
   }
 
@@ -97,7 +100,7 @@ class CampaignWorker {
     const contact = await this.manager.claimNextContact(campaign.id);
     if (!contact) return;
 
-    console.log(`[CampaignWorker] Procesando contacto ${contact.phone} en campaña "${campaign.name}"`);
+    log.info(`[CampaignWorker] Procesando contacto ${contact.phone} en campaña "${campaign.name}"`);
 
     try {
       let result;
@@ -128,7 +131,7 @@ class CampaignWorker {
       }
 
     } catch (err) {
-      console.error(`[CampaignWorker] Error contactando ${contact.phone}:`, err.message);
+      log.error(`[CampaignWorker] Error contactando ${contact.phone}:`, err.message);
       await this.manager.failContact(contact.id, err.message);
     }
   }
@@ -182,7 +185,7 @@ class CampaignWorker {
         })
       );
 
-      console.log(`[CampaignWorker] Llamada iniciada ${call.sid} → ${contact.phone}`);
+      log.info(`[CampaignWorker] Llamada iniciada ${call.sid} → ${contact.phone}`);
       this._trackRateLimit(campaign.id);
 
       return { success: true, called: true, callSid: call.sid, outcome: 'calling' };

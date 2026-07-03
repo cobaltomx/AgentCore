@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('LLMRouter');
 /**
  * LLM Router — selecciona el modelo óptimo por tipo de tarea
  * 
@@ -182,7 +185,7 @@ async function chat({ systemPrompt, systemDynamic = '', messages, tools = [], fo
 
     // Si el modelo rápido (Haiku) falló por deprecado o rate-limit → Sonnet
     if (model.startsWith('claude') && (isNotFound || isRateLimit) && isNotSonnet && !_noCrossFallback) {
-      console.warn(`[LLMRouter] ${model} no disponible (${err.status}), escalando a ${MODEL_SMART}`);
+      log.warn(`[LLMRouter] ${model} no disponible (${err.status}), escalando a ${MODEL_SMART}`);
       return chat({ systemPrompt, systemDynamic, messages, tools, forceModel: MODEL_SMART });
     }
 
@@ -193,12 +196,12 @@ async function chat({ systemPrompt, systemDynamic = '', messages, tools = [], fo
       const other = model.startsWith('claude') ? MODEL_XFALL : MODEL_SMART;
       const hasKey = other.startsWith('claude') ? !!process.env.ANTHROPIC_API_KEY : !!process.env.OPENAI_API_KEY;
       if (hasKey && other !== model) {
-        console.error(`[LLMRouter] ${model} falló (${err.status || 'net'}), fallback cruzado a ${other}:`, err.message?.slice(0, 120));
+        log.error(`[LLMRouter] ${model} falló (${err.status || 'net'}), fallback cruzado a ${other}:`, err.message?.slice(0, 120));
         return chat({ systemPrompt, systemDynamic, messages, tools, forceModel: other, _noCrossFallback: true });
       }
     }
 
-    console.error(`[LLMRouter] ${model} falló sin fallback:`, err.message);
+    log.error(`[LLMRouter] ${model} falló sin fallback:`, err.message);
     throw err;
   }
 }
@@ -243,7 +246,7 @@ async function chatStream({ systemPrompt, systemDynamic = '', messages, tools = 
     const final = await stream.finalMessage();
     const u = final.usage || {};
     if (u.cache_read_input_tokens || u.cache_creation_input_tokens)
-      console.log(`[LLM] caché: ${u.cache_read_input_tokens||0} leídos / ${u.cache_creation_input_tokens||0} escritos / ${u.input_tokens||0} nuevos`);
+      log.info(`[LLM] caché: ${u.cache_read_input_tokens||0} leídos / ${u.cache_creation_input_tokens||0} escritos / ${u.input_tokens||0} nuevos`);
     let content = '';
     const toolCalls = [];
     for (const block of final.content) {
@@ -259,11 +262,11 @@ async function chatStream({ systemPrompt, systemDynamic = '', messages, tools = 
     const isNotFound  = err.status === 404 || err.message?.includes('not_found');
     const isRateLimit = err.status === 429;
     if ((isNotFound || isRateLimit) && model !== MODEL_SMART) {
-      console.warn(`[LLMRouter] stream ${model} no disponible (${err.status}), escalando a ${MODEL_SMART}`);
+      log.warn(`[LLMRouter] stream ${model} no disponible (${err.status}), escalando a ${MODEL_SMART}`);
       return chatStream({ systemPrompt, systemDynamic, messages, tools, forceModel: MODEL_SMART, onText });
     }
     // Último recurso: no-streaming
-    console.error(`[LLMRouter] stream ${model} falló, fallback no-streaming:`, err.message);
+    log.error(`[LLMRouter] stream ${model} falló, fallback no-streaming:`, err.message);
     const r = await chat({ systemPrompt, systemDynamic, messages, tools, forceModel: MODEL_SMART });
     if (r.content && onText) onText(r.content);
     return r;

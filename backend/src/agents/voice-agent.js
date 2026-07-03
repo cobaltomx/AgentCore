@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../services/logger');
+const log = logger('VoiceAgent');
 /**
  * VoiceAgent — Motor principal del agente de voz
  * 
@@ -270,7 +273,7 @@ class VoiceAgent {
           });
 
         } catch (toolErr) {
-          console.error(`[VoiceAgent] Tool ${toolCall.name} falló:`, toolErr.message);
+          log.error(`[VoiceAgent] Tool ${toolCall.name} falló:`, toolErr.message);
           toolResults.push({ toolName: toolCall.name, error: toolErr.message });
         }
       }
@@ -435,7 +438,7 @@ class VoiceAgent {
             toolName: toolCall.name, toolInput: toolCall.input, toolOutput: result,
           });
         } catch (toolErr) {
-          console.error(`[VoiceAgent] Tool ${toolCall.name} falló:`, toolErr.message);
+          log.error(`[VoiceAgent] Tool ${toolCall.name} falló:`, toolErr.message);
           toolResults.push({ toolName: toolCall.name, error: toolErr.message });
         }
       }
@@ -982,7 +985,7 @@ class VoiceAgent {
         ]
       );
     } catch (err) {
-      console.error('[VoiceAgent] Error persistiendo mensaje:', err.message);
+      log.error('[VoiceAgent] Error persistiendo mensaje:', err.message);
     }
   }
 
@@ -1131,7 +1134,7 @@ REGLAS: nunca inventes propiedades, precios ni disponibilidad — usa solo lo qu
       );
       return r.rows;
     } catch (err) {
-      console.warn('[VoiceAgent] No se pudieron cargar profesionales:', err.message);
+      log.warn('[VoiceAgent] No se pudieron cargar profesionales:', err.message);
       return [];
     }
   }
@@ -1153,7 +1156,7 @@ REGLAS: nunca inventes propiedades, precios ni disponibilidad — usa solo lo qu
         const UsageTracker = require('../services/billing/usage-tracker');
         const tracker = new UsageTracker({ db: this.db });
         await tracker.recordUsage(tenantId, durationSecs).catch(err => {
-          console.error('[VoiceAgent] Error registrando uso:', err.message);
+          log.error('[VoiceAgent] Error registrando uso:', err.message);
         });
       }
 
@@ -1163,7 +1166,7 @@ REGLAS: nunca inventes propiedades, precios ni disponibilidad — usa solo lo qu
       const { analyzeInBackground } = require('../services/conversation-analyzer');
       analyzeInBackground(this.db, conversationId);
     } catch (err) {
-      console.error('[VoiceAgent] Error cerrando conversación:', err.message);
+      log.error('[VoiceAgent] Error cerrando conversación:', err.message);
     }
   }
 }

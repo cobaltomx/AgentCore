@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('Geocode');
 /**
  * Geocodificación + distancia para validar zonas de entrega (delivery).
  *
@@ -33,7 +36,7 @@ async function geocodeAddress(address, { near = null } = {}) {
       const r = data.results && data.results[0];
       if (r) return { lat: r.geometry.location.lat, lng: r.geometry.location.lng, formatted: r.formatted_address };
     } catch (err) {
-      console.warn('[geocode] Google falló, intento Nominatim:', err.message);
+      log.warn('[geocode] Google falló, intento Nominatim:', err.message);
     }
   }
 
@@ -51,7 +54,7 @@ async function geocodeAddress(address, { near = null } = {}) {
     const r = Array.isArray(data) && data[0];
     if (r) return { lat: parseFloat(r.lat), lng: parseFloat(r.lon), formatted: r.display_name };
   } catch (err) {
-    console.warn('[geocode] Nominatim falló:', err.message);
+    log.warn('[geocode] Nominatim falló:', err.message);
   }
   return null;
 }

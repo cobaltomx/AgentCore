@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../logger');
+const log = logger('ReminderWorker');
 /**
  * ReminderWorker — Recordatorios de citas y reactivación de pacientes
  *
@@ -29,7 +32,7 @@ class ReminderWorker {
         await this.sendReactivacionCampaign();
       }
     } catch (err) {
-      console.error('[ReminderWorker] Error en tick:', err.message);
+      log.error('[ReminderWorker] Error en tick:', err.message);
     }
   }
 
@@ -151,10 +154,10 @@ class ReminderWorker {
         [appt.id, appt.tenant_id, type, msg.sid]
       );
 
-      console.log(`[ReminderWorker] ${type} enviado — cita ${appt.id} → ${appt.patient_phone}`);
+      log.info(`[ReminderWorker] ${type} enviado — cita ${appt.id} → ${appt.patient_phone}`);
 
     } catch (err) {
-      console.error(`[ReminderWorker] Error enviando ${type} para cita ${appt.id}:`, err.message);
+      log.error(`[ReminderWorker] Error enviando ${type} para cita ${appt.id}:`, err.message);
       // Marcar como enviado (con error) para no reintentar indefinidamente
       const col = type === '24h' ? 'reminder_24h_sent' : 'reminder_2h_sent';
       await this.db.query(`UPDATE appointments SET ${col}=true WHERE id=$1`, [appt.id]).catch(() => {});
@@ -212,9 +215,9 @@ class ReminderWorker {
           [appt.id, appt.tenant_id]
         );
 
-        console.log(`[ReminderWorker] Post-consulta enviado — cita ${appt.id}`);
+        log.info(`[ReminderWorker] Post-consulta enviado — cita ${appt.id}`);
       } catch (err) {
-        console.error(`[ReminderWorker] Error post-consulta ${appt.id}:`, err.message);
+        log.error(`[ReminderWorker] Error post-consulta ${appt.id}:`, err.message);
         await this.db.query('UPDATE appointments SET post_instr_sent=true WHERE id=$1', [appt.id]).catch(() => {});
       }
     }
@@ -295,10 +298,10 @@ class ReminderWorker {
           );
         }
 
-        console.log(`[ReminderWorker] Reactivación enviada → ${patient.patient_phone} (tenant: ${patient.tenant_id})`);
+        log.info(`[ReminderWorker] Reactivación enviada → ${patient.patient_phone} (tenant: ${patient.tenant_id})`);
 
       } catch (err) {
-        console.error(`[ReminderWorker] Error reactivación ${patient.patient_phone}:`, err.message);
+        log.error(`[ReminderWorker] Error reactivación ${patient.patient_phone}:`, err.message);
       }
     }
   }

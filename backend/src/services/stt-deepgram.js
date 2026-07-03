@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('./logger');
+const log = logger('STTDeepgram');
 const { createClient, LiveTranscriptionEvents } = require('@deepgram/sdk');
 
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
@@ -126,12 +129,12 @@ function createLiveStream({ onTranscript, onSpeechStarted, onUtteranceEnd, onOpe
   });
 
   connection.on(LiveTranscriptionEvents.Error, (err) => {
-    console.error('[Deepgram] Streaming error:', err);
+    log.error('[Deepgram] Streaming error:', err);
     if (onError) onError(err);
   });
 
   connection.on(LiveTranscriptionEvents.Close, () => {
-    console.log('[Deepgram] Stream cerrado');
+    log.info('[Deepgram] Stream cerrado');
     if (onClose) onClose();
   });
 

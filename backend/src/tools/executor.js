@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../services/logger');
+const log = logger('Executor');
 /**
  * Tool Executor v2 — Fase 2
  *
@@ -87,7 +90,7 @@ async function executeToolCall({ name, input, session, db }) {
       return await checkDeliveryArea({ input, session, db });
 
     default:
-      console.warn(`[ToolExecutor] Tool desconocida: ${name}`);
+      log.warn(`[ToolExecutor] Tool desconocida: ${name}`);
       return { success: false, message: `Herramienta "${name}" no disponible` };
   }
 }
@@ -137,7 +140,7 @@ async function checkAvailability({ input, session, db }) {
     };
 
   } catch (err) {
-    console.error('[ToolExecutor] check_availability error:', err.message);
+    log.error('[ToolExecutor] check_availability error:', err.message);
     return {
       success: false,
       speech:  'Tuve un problema consultando los horarios. ¿Puedes llamarnos directamente para agendar?',
@@ -165,7 +168,7 @@ async function scheduleAppointment({ input, session, db }) {
           }).format(new Date(existingTime))
         : 'el horario confirmado';
 
-      console.log(`[ToolExecutor] schedule_appointment bloqueado — ya existe appointmentId ${existingId}`);
+      log.info(`[ToolExecutor] schedule_appointment bloqueado — ya existe appointmentId ${existingId}`);
       return {
         success:       true,
         alreadyBooked: true,
@@ -216,7 +219,7 @@ async function scheduleAppointment({ input, session, db }) {
         });
         leadId = c.id;
       } catch (leadErr) {
-        console.warn('[ToolExecutor] No se pudo resolver contacto:', leadErr.message);
+        log.warn('[ToolExecutor] No se pudo resolver contacto:', leadErr.message);
       }
     }
 
@@ -270,10 +273,10 @@ async function scheduleAppointment({ input, session, db }) {
               contentVariables: { '1': resolvedName, '2': appointment.displayTime || resolvedTime, '3': property || bizName } }
           : { from: fromNum, to: waTo, body: lines.join('\n') });
         waSent = r.ok;
-        if (r.ok) console.log(`[scheduleAppointment] Confirmación WhatsApp ${r.status} → ${waTo}`);
-        else console.warn(`[scheduleAppointment] WhatsApp NO entregado (${r.status}/err ${r.errorCode}) → ${waTo}`);
+        if (r.ok) log.info(`[scheduleAppointment] Confirmación WhatsApp ${r.status} → ${waTo}`);
+        else log.warn(`[scheduleAppointment] WhatsApp NO entregado (${r.status}/err ${r.errorCode}) → ${waTo}`);
       } catch (waErr) {
-        console.warn('[scheduleAppointment] WhatsApp confirmación no enviada:', waErr.message);
+        log.warn('[scheduleAppointment] WhatsApp confirmación no enviada:', waErr.message);
       }
     }
     // Honestidad: el rebote de WhatsApp (p.ej. 63016, fuera de ventana de 24h)
@@ -318,7 +321,7 @@ async function scheduleAppointment({ input, session, db }) {
     };
 
   } catch (err) {
-    console.error('[ToolExecutor] schedule_appointment error:', err.message);
+    log.error('[ToolExecutor] schedule_appointment error:', err.message);
 
     // Error de slot tomado — pedir otro
     if (err.message.includes('ya no está disponible')) {
@@ -351,7 +354,7 @@ async function cancelAppointment({ input, session, db }) {
     };
 
   } catch (err) {
-    console.error('[ToolExecutor] cancel_appointment error:', err.message);
+    log.error('[ToolExecutor] cancel_appointment error:', err.message);
     return {
       success: false,
       speech:  'No encontré esa cita. ¿Puedes darme más detalles para localizarla?',
@@ -394,7 +397,7 @@ async function findAppointment({ input, session, db }) {
     };
 
   } catch (err) {
-    console.error('[ToolExecutor] find_appointment error:', err.message);
+    log.error('[ToolExecutor] find_appointment error:', err.message);
     return { success: false, speech: 'No pude consultar tus citas en este momento.', message: err.message };
   }
 }
@@ -449,7 +452,7 @@ async function saveLead({ input, session, db }) {
       outcome: 'lead_captured',
     };
   } catch (err) {
-    console.error('[ToolExecutor] save_lead error:', err.message);
+    log.error('[ToolExecutor] save_lead error:', err.message);
     return { success: false, message: 'No se pudo guardar el contacto' };
   }
 }
@@ -483,7 +486,7 @@ async function joinWaitlist({ input, session, db }) {
       outcome: 'waitlisted',
     };
   } catch (e) {
-    console.error('[joinWaitlist] Error:', e.message);
+    log.error('[joinWaitlist] Error:', e.message);
     return { success: false, speech: 'No pude anotarte en la lista de espera. Intenta de nuevo.' };
   }
 }
@@ -525,7 +528,7 @@ async function transferToHuman({ input, session, db }) {
       });
     }
   } catch (err) {
-    console.error('[transferToHuman] Error marcando handoff:', err.message);
+    log.error('[transferToHuman] Error marcando handoff:', err.message);
   }
 
   // ── Handoff consciente del canal ─────────────────────────────
@@ -540,7 +543,7 @@ async function transferToHuman({ input, session, db }) {
       const s = r.rows[0]?.settings || {};
       transferTo = s.transferPhone || s.voiceTransferPhone || s.clinica?.urgencyPhone || null;
     } catch (e) {
-      console.error('[transferToHuman] Error leyendo número de transferencia:', e.message);
+      log.error('[transferToHuman] Error leyendo número de transferencia:', e.message);
     }
   }
 
@@ -606,7 +609,7 @@ async function searchKnowledgeBase({ input, session, db }) {
       speech:  null, // el LLM usa el contexto para formular la respuesta
     };
   } catch (err) {
-    console.error('[ToolExecutor] search_knowledge_base error:', err.message);
+    log.error('[ToolExecutor] search_knowledge_base error:', err.message);
     return { success: false, message: 'Error consultando la base de conocimiento' };
   }
 }
@@ -712,7 +715,7 @@ async function triageService({ input, session, db }) {
     };
 
   } catch (err) {
-    console.error('[ToolExecutor] triage_service error:', err.message);
+    log.error('[ToolExecutor] triage_service error:', err.message);
     return {
       success:    false,
       is_urgency: false,
@@ -753,7 +756,7 @@ async function escalateUrgency({ input, session, db }) {
           [JSON.stringify({ intent: 'urgencia_dental', urgency_reason: reason, is_urgency: true }), c.id]
         );
       }
-    } catch (e) { console.warn('[escalateUrgency] No se pudo marcar contacto urgente:', e.message); }
+    } catch (e) { log.warn('[escalateUrgency] No se pudo marcar contacto urgente:', e.message); }
 
     // Intentar enviar WhatsApp de alerta al número de guardia
     if (urgencyPhone) {
@@ -765,7 +768,7 @@ async function escalateUrgency({ input, session, db }) {
         const msg = `🚨 *URGENCIA DENTAL*\nPaciente: ${phone}\nMotivo: ${reason}\nLlamar de inmediato.`;
         await twilio.messages.create({ body: msg, from: `whatsapp:${fromNum}`, to: `whatsapp:${urgencyPhone}` });
       } catch (wErr) {
-        console.warn('[escalateUrgency] No se pudo enviar alerta WhatsApp:', wErr.message);
+        log.warn('[escalateUrgency] No se pudo enviar alerta WhatsApp:', wErr.message);
       }
     }
 
@@ -781,7 +784,7 @@ async function escalateUrgency({ input, session, db }) {
     };
 
   } catch (err) {
-    console.error('[ToolExecutor] escalate_urgency error:', err.message);
+    log.error('[ToolExecutor] escalate_urgency error:', err.message);
     return {
       success: false,
       speech:  'Hay una urgencia. Por favor llame directamente a la clínica para atención inmediata.',
@@ -831,7 +834,7 @@ async function sendDepositLink({ input, session, db }) {
         [paymentLink, depositAmount, appointment_id]
       );
     } catch (stripeErr) {
-      console.warn('[sendDepositLink] Stripe no disponible:', stripeErr.message);
+      log.warn('[sendDepositLink] Stripe no disponible:', stripeErr.message);
       paymentLink = null;
     }
 
@@ -845,7 +848,7 @@ async function sendDepositLink({ input, session, db }) {
         const msg = `Para confirmar su cita, realice el anticipo de $${depositAmount} MXN en el siguiente enlace:\n${paymentLink}\n\nGracias por elegirnos.`;
         await twilio.messages.create({ body: msg, from: `whatsapp:${fromNum}`, to: `whatsapp:${phone}` });
       } catch (waErr) {
-        console.warn('[sendDepositLink] WhatsApp no disponible:', waErr.message);
+        log.warn('[sendDepositLink] WhatsApp no disponible:', waErr.message);
       }
     }
 
@@ -859,7 +862,7 @@ async function sendDepositLink({ input, session, db }) {
     };
 
   } catch (err) {
-    console.error('[ToolExecutor] send_deposit_link error:', err.message);
+    log.error('[ToolExecutor] send_deposit_link error:', err.message);
     return {
       success: false,
       speech:  'No pude generar el link de pago en este momento. Le contactaremos para coordinar el anticipo.',
@@ -1090,7 +1093,7 @@ async function bookSessionSeries({ input, session, db }) {
           to:   `whatsapp:${prof.phone}`,
         });
       } catch (err) {
-        console.warn('[BookSeries] Error enviando alerta al profesional:', err.message);
+        log.warn('[BookSeries] Error enviando alerta al profesional:', err.message);
       }
     }
   }
@@ -1151,7 +1154,7 @@ async function sendVideoLink({ input, session, db }) {
 
     return { success: true, message: `Link de videollamada enviado a ${phone}` };
   } catch (err) {
-    console.error('[SendVideoLink] Error:', err.message);
+    log.error('[SendVideoLink] Error:', err.message);
     return { success: false, message: 'No se pudo enviar el link. Verifica la configuración de WhatsApp.' };
   }
 }
@@ -1252,7 +1255,7 @@ async function searchProducts({ input, session, db }) {
       collectedData: { lastProductSearch: products.map(p => ({ id: p.id, name: p.name, unit_cents: p.price_cents })) },
     };
   } catch (err) {
-    console.error('[searchProducts] Error:', err.message);
+    log.error('[searchProducts] Error:', err.message);
     return { success: false, speech: 'Tuve un problema consultando el catálogo. Intenta de nuevo.' };
   }
 }
@@ -1361,7 +1364,7 @@ async function addToCart({ input, session, db }) {
       collectedData: { cart },
     };
   } catch (err) {
-    console.error('[addToCart] Error:', err.message);
+    log.error('[addToCart] Error:', err.message);
     return { success: false, speech: 'No pude agregar el producto. Intenta de nuevo.' };
   }
 }
@@ -1398,7 +1401,7 @@ async function removeFromCart({ input, session, db }) {
       : `Listo, quité ${removedName}. Tu carrito quedó vacío. ¿Quieres ver el menú?`;
     return { success: true, speech, cart: cartSummary(cart), collectedData: { cart } };
   } catch (err) {
-    console.error('[removeFromCart] Error:', err.message);
+    log.error('[removeFromCart] Error:', err.message);
     return { success: false, speech: 'No pude actualizar el carrito. Intenta de nuevo.' };
   }
 }
@@ -1454,7 +1457,7 @@ async function checkoutOrder({ input, session, db }) {
       collectedData: { cart: [], lastOrderId: result.order_id },
     };
   } catch (err) {
-    console.error('[checkoutOrder] Error:', err.message);
+    log.error('[checkoutOrder] Error:', err.message);
     return { success: true, speech: err.message || 'No pude generar el link de pago. Intenta de nuevo.' };
   }
 }
@@ -1518,9 +1521,9 @@ async function sendPropertyInfo({ input, session, db }) {
             contentVariables: { '1': p.name, '2': a.priceLabel || ('$' + (p.price_cents / 100).toLocaleString('es-MX')), '3': link } }
         : { from: fromNum, to: waTo, body: lines.join('\n'), mediaUrl: withMedia ? cover : undefined });
       if (r.ok) { sent++; enviadas.push(p.name); }
-      else console.warn(`[sendPropertyInfo] WhatsApp NO entregado (${r.status}/err ${r.errorCode}) → ${waTo}`);
+      else log.warn(`[sendPropertyInfo] WhatsApp NO entregado (${r.status}/err ${r.errorCode}) → ${waTo}`);
     } catch (e) {
-      console.warn('[sendPropertyInfo] WhatsApp falló:', e.message);
+      log.warn('[sendPropertyInfo] WhatsApp falló:', e.message);
     }
   }
 

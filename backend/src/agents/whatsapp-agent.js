@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../services/logger');
+const log = logger('WhatsAppAgent');
 /**
  * WhatsAppAgent — Fase 3
  *
@@ -62,7 +65,7 @@ class WhatsAppAgent {
     // Fallback: usar primer agente activo del tenant
     const agent = agentResult.rows[0] || await this._getFallbackAgent(tenantId);
     if (!agent) {
-      console.error(`[WAAgent] No hay agente WhatsApp para tenant ${tenantId}`);
+      log.error(`[WAAgent] No hay agente WhatsApp para tenant ${tenantId}`);
       return;
     }
 
@@ -93,7 +96,7 @@ class WhatsAppAgent {
     const metaClient     = createMetaClient(tenantSettings) || createMetaClient({});
 
     if (!metaClient) {
-      console.error(`[WAAgent] No hay config Meta para tenant ${tenantId}`);
+      log.error(`[WAAgent] No hay config Meta para tenant ${tenantId}`);
       return;
     }
 
@@ -152,7 +155,7 @@ class WhatsAppAgent {
           });
 
         } catch (toolErr) {
-          console.error(`[WAAgent] Tool ${toolCall.name} falló:`, toolErr.message);
+          log.error(`[WAAgent] Tool ${toolCall.name} falló:`, toolErr.message);
         }
       }
 
@@ -271,7 +274,7 @@ INSTRUCCIONES PARA WHATSAPP (tienen PRIORIDAD sobre cualquier regla anterior):
          tokensUsed, latencyMs]
       );
     } catch (err) {
-      console.error('[WAAgent] Error persistiendo mensaje:', err.message);
+      log.error('[WAAgent] Error persistiendo mensaje:', err.message);
     }
   }
 
@@ -287,7 +290,7 @@ INSTRUCCIONES PARA WHATSAPP (tienen PRIORIDAD sobre cualquier regla anterior):
       const { analyzeInBackground } = require('../services/conversation-analyzer');
       analyzeInBackground(this.db, conversationId);
     } catch (err) {
-      console.error('[WAAgent] Error cerrando conversación:', err.message);
+      log.error('[WAAgent] Error cerrando conversación:', err.message);
     }
   }
 }

@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../services/logger');
+const log = logger('WebchatAgent');
 /**
  * WebChatAgent — Canal de chat web (widget embebible)
  *
@@ -135,7 +138,7 @@ class WebChatAgent {
             toolName: tc.name, toolInput: tc.input, toolOutput: result,
           });
         } catch (e) {
-          console.error(`[WebAgent] Tool ${tc.name} falló:`, e.message);
+          log.error(`[WebAgent] Tool ${tc.name} falló:`, e.message);
         }
       }
 
@@ -247,7 +250,7 @@ INSTRUCCIONES PARA CHAT WEB (tienen PRIORIDAD sobre cualquier regla anterior):
          tokensUsed, latencyMs]
       );
     } catch (err) {
-      console.error('[WebAgent] Error persistiendo mensaje:', err.message);
+      log.error('[WebAgent] Error persistiendo mensaje:', err.message);
     }
   }
 }

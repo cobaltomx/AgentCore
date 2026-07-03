@@ -1,5 +1,8 @@
 'use strict';
 
+
+const { logger } = require('../logger');
+const log = logger('RAGIngestion');
 /**
  * Document Ingestion Pipeline — Fase 5
  *
@@ -127,12 +130,12 @@ class IngestionPipeline {
         [chunks.length, documentId]
       );
 
-      console.log(`[RAG] Documento ingested: ${doc.title} → ${chunks.length} chunks, ~$${estimatedUSD.toFixed(4)}`);
+      log.info(`[RAG] Documento ingested: ${doc.title} → ${chunks.length} chunks, ~$${estimatedUSD.toFixed(4)}`);
 
       return { chunksCreated: chunks.length, tokensUsed: totalTokens, costUSD: estimatedUSD };
 
     } catch (err) {
-      console.error(`[RAG] Error ingesting ${documentId}:`, err.message);
+      log.error(`[RAG] Error ingesting ${documentId}:`, err.message);
       await this._setStatus(documentId, 'error', err.message);
       throw err;
     }
