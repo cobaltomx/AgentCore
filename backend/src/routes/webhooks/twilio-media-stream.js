@@ -373,16 +373,29 @@ async function mediaStreamRoutes(app) {
       }, 8000);
 
       try {
-        const res = await voiceAgent.startCall({
-          agentId, tenantId, contactPhone: from, callSid,
-          skipSynth: true, greetingOverride: greeting,
-        });
+        // Timeout de seguridad: si startCall se cuelga (DB/red lenta) más de
+        // 12s, el usuario quedaba en silencio total hasta que Twilio colgaba
+        // por timeout propio (~30s) sin ningún diagnóstico. Con esto, al menos
+        // se corta con un mensaje y queda registrado en logs.
+        const res = await Promise.race([
+          voiceAgent.startCall({
+            agentId, tenantId, contactPhone: from, callSid,
+            skipSynth: true, greetingOverride: greeting,
+          }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('startCall timeout 12s')), 12000)),
+        ]);
         voiceId = res.voiceId;
         getFillers(voiceId).catch(() => {});
         say(res.greetingText);
         armSilenceWatch();
       } catch (err) {
         app.log.error({ err, callSid }, '[MediaStream] Error en startCall');
+        if (!closed) {
+          await say('Hola, en este momento tenemos un problema técnico. Por favor intenta de nuevo en unos minutos.');
+          await speakChain;
+          cleanup();
+          if (ws.readyState === 1) ws.close();
+        }
       }
     }
 
