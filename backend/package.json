@@ -7,6 +7,8 @@
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
     "db:migrate": "node scripts/migrate.js",
+    "db:migrate:status": "node scripts/migrate.js --status",
+    "db:migrate:baseline": "node scripts/migrate.js --baseline",
     "db:seed": "node scripts/seed.js",
     "test": "node --test test/"
   },

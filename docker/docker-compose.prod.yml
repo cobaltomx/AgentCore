@@ -1,0 +1,152 @@
+version: "3.9"
+
+# ════════════════════════════════════════════════════════════════════
+#  AgentCore — COMPOSE DE PRODUCCIÓN
+#
+#  Diferencias clave vs. el compose de desarrollo (endurecimiento):
+#   - Backend con imagen construida (sin bind-mount de código ni nodemon).
+#   - NODE_ENV=production.
+#   - Postgres y Redis SIN puertos publicados al host (solo red interna).
+#   - Redis con contraseña (REDIS_PASSWORD).
+#   - Frontend con Apache + mod_php (no `php -S`, que no es para producción).
+#   - Reinicio automático de todos los servicios.
+#
+#  Uso:
+#    cp .env.example .env    # y llenar los secretos de producción
+#    docker compose -f docker/docker-compose.prod.yml up -d --build
+#    docker compose -f docker/docker-compose.prod.yml exec backend npm run db:migrate
+#
+#  Requiere en .env: POSTGRES_PASSWORD, REDIS_PASSWORD, JWT_SECRET (fuerte),
+#  PUBLIC_URL (dominio fijo con TLS), y las llaves de proveedores.
+# ════════════════════════════════════════════════════════════════════
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: agentcore_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agentcore}
+      POSTGRES_USER: ${POSTGRES_USER:-agentcore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}
+    # SIN `ports:` → Postgres NO es accesible desde fuera de la red Docker.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Instalación nueva: carga el schema CONSOLIDADO completo (38 tablas) en
+      # vez de init.sql + replay de migraciones. Tras el primer arranque, correr
+      # `npm run db:migrate:baseline` para registrar el histórico.
+      - ../scripts/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentcore}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: agentcore_redis
+    restart: always
+    # SIN `ports:` + contraseña obligatoria.
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?falta REDIS_PASSWORD en .env}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile          # imagen de producción (no .dev)
+    container_name: agentcore_backend
+    restart: always
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      # REDIS_URL con auth (sobrescribe el del .env si hiciera falta).
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    expose:
+      - "3000"                        # visible solo dentro de la red Docker
+    volumes:
+      - ../scripts:/app/scripts:ro    # migration runner + .sql
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    image: php:8.3-apache
+    container_name: agentcore_frontend
+    restart: always
+    environment:
+      API_BASE_URL: http://backend:3000/api/v1
+      APP_ENV: production
+    volumes:
+      - ../frontend:/var/www/html:ro
+    depends_on:
+      - backend
+
+  mariadb:
+    image: mariadb:11
+    container_name: agentcore_mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${EA_DB_ROOT_PASSWORD:?falta EA_DB_ROOT_PASSWORD}
+      MARIADB_DATABASE:      ${EA_DB_NAME:-easyappointments}
+      MARIADB_USER:          ${EA_DB_USER:-easyapp}
+      MARIADB_PASSWORD:      ${EA_DB_PASSWORD:?falta EA_DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  easyappointments:
+    image: alextselegidis/easyappointments:latest
+    container_name: agentcore_ea
+    restart: always
+    environment:
+      BASE_URL:    ${EA_BASE_URL}
+      DB_HOST:     mariadb
+      DB_NAME:     ${EA_DB_NAME:-easyappointments}
+      DB_USERNAME: ${EA_DB_USER:-easyapp}
+      DB_PASSWORD: ${EA_DB_PASSWORD}
+      DB_PORT:     3306
+      DEBUG_MODE:  false
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  # Reverse proxy con TLS automático (dominio fijo). Enrutamiento:
+  #   {dominio}/api, /webhooks, /health → backend:3000
+  #   resto                             → frontend:80
+  # Requiere PUBLIC_DOMAIN en .env (ej. app.tudominio.com).
+  caddy:
+    image: caddy:2-alpine
+    container_name: agentcore_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?falta PUBLIC_DOMAIN en .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
+  redis_data:
+  mariadb_data:
+  caddy_data:
+  caddy_config:

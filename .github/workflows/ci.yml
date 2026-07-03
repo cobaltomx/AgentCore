@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (Node)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: agentcore_test
+          POSTGRES_USER: agentcore
+          POSTGRES_PASSWORD: testpass
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd "pg_isready -U agentcore"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: [ "6379:6379" ]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://agentcore:testpass@localhost:5432/agentcore_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-test-secret-not-for-production
+      NODE_ENV: test
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      # Chequeo de sintaxis de todos los .js del backend
+      - name: Syntax check (node --check)
+        run: |
+          fail=0
+          for f in $(find src -name "*.js"); do
+            node --check "$f" || { echo "❌ $f"; fail=1; }
+          done
+          exit $fail
+      # Suite de tests unitarios (node:test)
+      - name: Unit tests
+        run: npm test
+
+  frontend:
+    name: Frontend (PHP lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: PHP lint (php -l)
+        run: |
+          fail=0
+          for f in $(find frontend -name "*.php" -not -path "*/vendor/*"); do
+            php -l "$f" > /dev/null || { echo "❌ $f"; fail=1; }
+          done
+          exit $fail
+
+  migrations:
+    name: Migration runner
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: agentcore_mig
+          POSTGRES_USER: agentcore
+          POSTGRES_PASSWORD: testpass
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd "pg_isready -U agentcore"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://agentcore:testpass@localhost:5432/agentcore_mig
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install pg
+        run: npm install pg --no-save
+      # Instalación nueva: cargar el schema CONSOLIDADO (contiene todo) y
+      # registrar las migraciones históricas como baseline. Valida que
+      # schema.sql carga sin errores y que el runner queda sin pendientes.
+      - name: Load consolidated schema
+        run: psql "$DATABASE_URL" -f scripts/schema.sql
+      - name: Baseline migrations
+        run: node scripts/migrate.js --baseline
+      - name: Verify no pending
+        run: node scripts/migrate.js --status | grep -q "0 pendientes"

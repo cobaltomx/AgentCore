@@ -6,16 +6,14 @@
  *
  * Prioridad:
  *   1. settings.publicDomain del tenant  (dominio fijo por cliente — producción)
- *   2. PUBLIC_BASE_URL del entorno        (dominio del deployment)
+ *   2. PUBLIC_URL / PUBLIC_BASE_URL       (dominio fijo del deployment)
  *   3. APP_URL (túnel ngrok)              ← TEMPORAL: cambia al reiniciar y
  *                                            muestra interstitial. Solo para dev.
- *
- * TODO producción: asignar settings.publicDomain a cada tenant (o un dominio
- * propio por implementación) y dejar de depender de ngrok.
  */
 function publicBase(tenantSettings = {}) {
   const fromTenant = tenantSettings && (tenantSettings.publicDomain || tenantSettings.domain);
-  const base = fromTenant || process.env.PUBLIC_BASE_URL || process.env.APP_URL || '';
+  const base = fromTenant
+    || process.env.PUBLIC_URL || process.env.PUBLIC_BASE_URL || process.env.APP_URL || '';
   return String(base).replace(/\/$/, '');
 }
 

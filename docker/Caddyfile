@@ -1,0 +1,18 @@
+# Reverse proxy de producción con TLS automático (Let's Encrypt).
+# El dominio se inyecta por variable de entorno PUBLIC_DOMAIN.
+# Las rutas de API/webhooks/health van al backend Node; el resto al frontend PHP.
+
+{$PUBLIC_DOMAIN} {
+	encode gzip
+
+	# Backend (API REST, webhooks de Twilio/Meta/Stripe, WebSocket de voz, health)
+	@backend path /api/* /webhooks/* /health
+	handle @backend {
+		reverse_proxy backend:3000
+	}
+
+	# Frontend (dashboard PHP servido por Apache)
+	handle {
+		reverse_proxy frontend:80
+	}
+}

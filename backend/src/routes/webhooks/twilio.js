@@ -21,6 +21,10 @@ const { tenantHasFeature } = require('../../services/features');
 const path = require('path');
 const fs = require('fs').promises;
 
+// Base pública para las URLs de callback de Twilio. En producción usa el
+// dominio fijo (PUBLIC_URL); en dev cae al túnel ngrok (APP_URL).
+const pubUrl = () => process.env.PUBLIC_URL || process.env.APP_URL || '';
+
 async function twilioRoutes(app) {
 
   // Anti-spoofing: validar firma X-Twilio-Signature en todos los POST del plugin.
@@ -154,7 +158,7 @@ async function twilioRoutes(app) {
       // Una sola voz (Cartesia), barge-in y baja latencia. Fallback al flujo
       // <Gather> clásico si VOICE_STREAMING=off.
       if (process.env.VOICE_STREAMING !== 'off') {
-        const wssUrl = (process.env.APP_URL || '').replace(/^https?:/, 'wss:') + '/webhooks/twilio/media-stream';
+        const wssUrl = (pubUrl() || '').replace(/^https?:/, 'wss:') + '/webhooks/twilio/media-stream';
         return xmlReply(reply, `
           <Connect>
             <Stream url="${wssUrl}">
@@ -171,12 +175,12 @@ async function twilioRoutes(app) {
       return xmlReply(reply, `
         <Say language="es-MX" voice="Polly.Mia-Neural">${greeting}</Say>
         <Gather input="speech"
-                action="${process.env.APP_URL}/webhooks/twilio/gather"
+                action="${pubUrl()}/webhooks/twilio/gather"
                 method="POST" speechTimeout="auto" language="es-MX"
                 hints="${hints}">
           <Pause length="2"/>
         </Gather>
-        <Redirect method="POST">${process.env.APP_URL}/webhooks/twilio/no-input?sid=${CallSid}</Redirect>
+        <Redirect method="POST">${pubUrl()}/webhooks/twilio/no-input?sid=${CallSid}</Redirect>
       `);
 
     } catch (err) {
@@ -217,7 +221,7 @@ async function twilioRoutes(app) {
             Disculpa, no te entendí. ¿Podrías repetir?
           </Say>
           <Gather input="speech"
-                  action="${process.env.APP_URL}/webhooks/twilio/gather"
+                  action="${pubUrl()}/webhooks/twilio/gather"
                   method="POST" speechTimeout="auto" language="es-MX">
             <Pause length="1"/>
           </Gather>`);
@@ -291,7 +295,7 @@ async function twilioRoutes(app) {
       // Responder a Twilio en <200ms con filler y redirect al resultado
       return xmlReply(reply, `
         <Say language="es-MX" voice="Polly.Mia-Neural">${fillerText}</Say>
-        <Redirect method="POST">${process.env.APP_URL}/webhooks/twilio/ai-response?sid=${CallSid}</Redirect>
+        <Redirect method="POST">${pubUrl()}/webhooks/twilio/ai-response?sid=${CallSid}</Redirect>
       `);
 
     } catch (err) {
@@ -301,7 +305,7 @@ async function twilioRoutes(app) {
           Disculpa, tuve un problema. ¿Puedes repetir?
         </Say>
         <Gather input="speech"
-                action="${process.env.APP_URL}/webhooks/twilio/gather"
+                action="${pubUrl()}/webhooks/twilio/gather"
                 method="POST" speechTimeout="auto" language="es-MX">
           <Pause length="1"/>
         </Gather>`);
@@ -345,7 +349,7 @@ async function twilioRoutes(app) {
           : 'Casi listo, gracias por la paciencia...';
         return xmlReply(reply, `
           <Say language="es-MX" voice="Polly.Mia-Neural">${extraFiller}</Say>
-          <Redirect method="POST">${process.env.APP_URL}/webhooks/twilio/ai-response?sid=${sid}&amp;retry=${retry + 1}</Redirect>
+          <Redirect method="POST">${pubUrl()}/webhooks/twilio/ai-response?sid=${sid}&amp;retry=${retry + 1}</Redirect>
         `);
       }
 
@@ -355,7 +359,7 @@ async function twilioRoutes(app) {
           Disculpa, tuve un problema técnico. ¿Puedes repetirme lo que necesitas?
         </Say>
         <Gather input="speech"
-                action="${process.env.APP_URL}/webhooks/twilio/gather"
+                action="${pubUrl()}/webhooks/twilio/gather"
                 method="POST" speechTimeout="auto" language="es-MX">
           <Pause length="1"/>
         </Gather>`);
@@ -388,11 +392,11 @@ async function twilioRoutes(app) {
     return xmlReply(reply, `
       ${audioBlock}
       <Gather input="speech"
-              action="${process.env.APP_URL}/webhooks/twilio/gather"
+              action="${pubUrl()}/webhooks/twilio/gather"
               method="POST" speechTimeout="auto" language="es-MX">
         <Pause length="1"/>
       </Gather>
-      <Redirect method="POST">${process.env.APP_URL}/webhooks/twilio/no-input?sid=${sid}</Redirect>
+      <Redirect method="POST">${pubUrl()}/webhooks/twilio/no-input?sid=${sid}</Redirect>
     `);
   });
 
@@ -409,7 +413,7 @@ async function twilioRoutes(app) {
         ¿Sigues ahí? ¿En qué puedo ayudarte?
       </Say>
       <Gather input="speech"
-              action="${process.env.APP_URL}/webhooks/twilio/gather"
+              action="${pubUrl()}/webhooks/twilio/gather"
               method="POST" speechTimeout="auto" language="es-MX">
         <Pause length="1"/>
       </Gather>
@@ -474,7 +478,7 @@ async function audioToUrl(text, voiceId, filename) {
   }
 
   const audioPath = await synthesizeToFile(text, voiceId, filename);
-  return `${process.env.APP_URL}/webhooks/twilio/audio/${path.basename(audioPath)}`;
+  return `${pubUrl()}/webhooks/twilio/audio/${path.basename(audioPath)}`;
 }
 
 module.exports = twilioRoutes;
