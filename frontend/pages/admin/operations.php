@@ -43,6 +43,70 @@ renderHead('Operación — Super Admin');
     <p class="text-muted mb-0">Mira la actividad de toda la plataforma, de una vertical, o de un negocio específico.</p>
   </div>
 
+  <!-- ── SALDOS DE PROVEEDORES (prioridad #1: que nada se agote sin aviso) ── -->
+  <div class="card mb-4" id="balances-card">
+    <div class="card-body py-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0"><i class="bx bx-wallet me-1 text-primary"></i>Saldos de proveedores</h6>
+        <div class="d-flex align-items-center gap-2">
+          <small class="text-muted" id="bal-checked"></small>
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="bal-refresh" title="Actualizar ahora" aria-label="Actualizar saldos">
+            <i class="bx bx-refresh"></i>
+          </button>
+        </div>
+      </div>
+      <div class="row g-2" id="bal-row" role="status" aria-live="polite">
+        <div class="col-12 text-muted small"><span class="spinner-border spinner-border-sm me-2" role="presentation"></span>Consultando saldos…</div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    const STYLE = {
+      ok:           { cls:'success',   icon:'bx-check-circle', txt:'OK' },
+      low:          { cls:'warning',   icon:'bx-error',        txt:'Bajo' },
+      out:          { cls:'danger',    icon:'bx-x-circle',     txt:'AGOTADO' },
+      error:        { cls:'danger',    icon:'bx-shield-x',     txt:'Error' },
+      unconfigured: { cls:'secondary', icon:'bx-minus-circle', txt:'Sin configurar' },
+    };
+    async function load(force){
+      const row = document.getElementById('bal-row');
+      try {
+        const r = await fetch('/api/superadmin-balances.php' + (force ? '?force=1' : ''));
+        const d = await r.json();
+        if (!d || !Array.isArray(d.providers)) throw new Error(d?.error || 'sin datos');
+        row.innerHTML = d.providers.map(p => {
+          const s = STYLE[p.status] || STYLE.error;
+          const amount = (p.balance != null) ? `$${Number(p.balance).toFixed(2)} <small>${p.currency||'USD'}</small>` : s.txt;
+          return `<div class="col-6 col-md-4 col-xl">
+            <div class="border rounded-3 p-2 h-100 border-${s.cls} bg-label-${s.cls}">
+              <div class="d-flex align-items-center justify-content-between">
+                <small class="fw-semibold text-truncate" title="${p.label}">${p.label}</small>
+                <i class="bx ${s.icon} text-${s.cls}" aria-hidden="true"></i>
+              </div>
+              <div class="fs-5 fw-bold text-${s.cls}">${amount}</div>
+              ${p.detail ? `<small class="text-muted d-block text-truncate" title="${p.detail}">${p.detail}</small>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+        const chk = document.getElementById('bal-checked');
+        if (d.checkedAt) chk.textContent = 'verificado ' + new Date(d.checkedAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+        const card = document.getElementById('balances-card');
+        card.classList.remove('border-danger','border-warning');
+        if (d.overall === 'out' || d.overall === 'error') card.classList.add('border-danger');
+        else if (d.overall === 'low') card.classList.add('border-warning');
+      } catch(e) {
+        row.innerHTML = `<div class="col-12 text-danger small"><i class="bx bx-error me-1"></i>No se pudieron consultar los saldos: ${e.message}</div>`;
+      }
+    }
+    document.getElementById('bal-refresh').addEventListener('click', () => {
+      document.getElementById('bal-row').innerHTML = '<div class="col-12 text-muted small"><span class="spinner-border spinner-border-sm me-2"></span>Actualizando…</div>';
+      load(true);
+    });
+    load(false);
+  })();
+  </script>
+
   <!-- ── Selector de scope (include reutilizable) ──────────── -->
   <?php renderScopeSelector([
     'industry'=>$industry, 'tenantId'=>$tenantId, 'verticals'=>$verticals,

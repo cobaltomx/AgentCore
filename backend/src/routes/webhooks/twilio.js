@@ -23,6 +23,10 @@ const fs = require('fs').promises;
 
 async function twilioRoutes(app) {
 
+  // Anti-spoofing: validar firma X-Twilio-Signature en todos los POST del plugin.
+  const { twilioSignaturePreHandler } = require('../../services/twilio-signature');
+  app.addHook('preHandler', twilioSignaturePreHandler(app));
+
   const voiceAgent = new VoiceAgent({ db: app.db, redis: app.redis });
 
   // Ruta para servir audios temporales generados por Cartesia

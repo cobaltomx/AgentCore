@@ -44,9 +44,39 @@ async function start() {
     const reminderTimer = setInterval(() => reminderWorker.runTick(), REMINDER_INTERVAL);
     console.log('[ReminderWorker] Iniciado — tick cada 15 min');
 
+    // Monitor de saldos — chequea proveedores cada 30 min y notifica al
+    // superadmin si algo se agota (nació del incidente "sin créditos y nadie
+    // se enteró"). El primer chequeo se hace a los 60s para no frenar el boot.
+    const { checkAndNotify } = require('./services/balance-monitor');
+    const balanceTick = () => checkAndNotify(app.db, app.redis)
+      .then(d => console.log(`[BalanceMonitor] estado general: ${d.overall}`))
+      .catch(e => console.warn('[BalanceMonitor] tick falló:', e.message));
+    const balanceFirst = setTimeout(balanceTick, 60 * 1000);
+    const balanceTimer = setInterval(balanceTick, 30 * 60 * 1000);
+    console.log('[BalanceMonitor] Iniciado — tick cada 30 min');
+
+    // Cierre de conversaciones zombies — 'active' sin actividad >6h pasan a
+    // 'completed' para no ensuciar métricas/dashboard. Corre cada hora.
+    const closeZombies = async () => {
+      try {
+        const r = await app.db.query(
+          `UPDATE conversations SET status='completed', ended_at = COALESCE(ended_at, now())
+           WHERE status='active'
+             AND COALESCE(
+                   (SELECT MAX(created_at) FROM messages m WHERE m.conversation_id = conversations.id),
+                   started_at
+                 ) < now() - interval '6 hours'`
+        );
+        if (r.rowCount > 0) console.log(`[ZombieCloser] ${r.rowCount} conversaciones inactivas cerradas`);
+      } catch (e) { console.warn('[ZombieCloser] falló:', e.message); }
+    };
+    closeZombies();
+    const zombieTimer = setInterval(closeZombies, 60 * 60 * 1000);
+
     // Detener workers al apagar
-    process.on('SIGTERM', () => { worker.stop(); clearInterval(reminderTimer); process.exit(0); });
-    process.on('SIGINT',  () => { worker.stop(); clearInterval(reminderTimer); process.exit(0); });
+    const stopAll = () => { worker.stop(); clearInterval(reminderTimer); clearTimeout(balanceFirst); clearInterval(balanceTimer); clearInterval(zombieTimer); process.exit(0); };
+    process.on('SIGTERM', stopAll);
+    process.on('SIGINT',  stopAll);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

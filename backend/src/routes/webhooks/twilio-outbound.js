@@ -18,6 +18,10 @@ const CampaignManager = require('../../services/campaigns/campaign-manager');
 
 async function outboundAnswerRoutes(app) {
 
+  // Anti-spoofing: validar firma X-Twilio-Signature en todos los POST del plugin.
+  const { twilioSignaturePreHandler } = require('../../services/twilio-signature');
+  app.addHook('preHandler', twilioSignaturePreHandler(app));
+
   /**
    * POST /webhooks/twilio/outbound-answer
    * Twilio llama aquí cuando el contacto contesta

@@ -23,6 +23,14 @@ async function superadminRoutes(app) {
     ).catch((e) => app.log?.warn({ err: e }, 'audit_log insert failed'));
   }
 
+  // ── GET /balances — saldos de proveedores (Twilio/Deepgram/Anthropic/OpenAI)
+  //    ?force=1 salta el caché de 10 min. Prioridad #1 del panel: que nunca
+  //    se agote un saldo sin que el superadmin se entere.
+  app.get('/balances', { onRequest: [app.requireSuperAdmin] }, async (request) => {
+    const { getBalances } = require('../../services/balance-monitor');
+    return getBalances({ force: request.query.force === '1' });
+  });
+
   // GET /api/v1/superadmin/tenants — lista todos los tenants con estadísticas
   app.get('/tenants', { onRequest: [app.requireSuperAdmin] }, async (request) => {
     const result = await app.db.query(`

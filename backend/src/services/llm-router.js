@@ -25,6 +25,28 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // Si Haiku no estuviera disponible, el catch escala a SMART automáticamente.
 const MODEL_FAST  = process.env.LLM_MODEL_FAST  || 'claude-haiku-4-5-20251001';
 const MODEL_SMART = process.env.LLM_MODEL_SMART || 'claude-sonnet-4-6';
+// Fallback CRUZADO de proveedor: si Anthropic muere (sin créditos, caído),
+// intentamos una vez con OpenAI (y viceversa). Evita que el bot quede mudo
+// por una sola cuenta agotada.
+const MODEL_XFALL = process.env.LLM_MODEL_CROSS_FALLBACK || 'gpt-4o-mini';
+
+/** Mensajes en formato Anthropic (bloques tool_use/tool_result) → texto plano
+ *  compatible con OpenAI. Solo se usa en el fallback de emergencia. */
+function sanitizeForOpenAI(messages) {
+  return messages.map((m) => {
+    if (typeof m.content === 'string') return { role: m.role, content: m.content };
+    if (Array.isArray(m.content)) {
+      const text = m.content.map((b) => {
+        if (b.type === 'text') return b.text;
+        if (b.type === 'tool_use') return `[Acción: ${b.name}(${JSON.stringify(b.input)})]`;
+        if (b.type === 'tool_result') return `[Resultado: ${typeof b.content === 'string' ? b.content : JSON.stringify(b.content)}]`;
+        return '';
+      }).filter(Boolean).join('\n');
+      return { role: m.role === 'tool' ? 'user' : m.role, content: text || '…' };
+    }
+    return { role: m.role, content: String(m.content ?? '') };
+  }).filter(m => m.content);
+}
 
 const TASK_MODELS = {
   faq:        MODEL_FAST,
@@ -77,7 +99,7 @@ function classifyIntent(userMessage, conversationHistory = []) {
  * @param {string} params.taskType - Tipo de tarea para routing (opcional)
  * @returns {Object} { content, toolCalls, model, tokensUsed, latencyMs }
  */
-async function chat({ systemPrompt, systemDynamic = '', messages, tools = [], forceModel, taskType }) {
+async function chat({ systemPrompt, systemDynamic = '', messages, tools = [], forceModel, taskType, _noCrossFallback = false }) {
   const startTime = Date.now();
 
   // Determinar modelo
@@ -119,7 +141,7 @@ async function chat({ systemPrompt, systemDynamic = '', messages, tools = [], fo
       // --- OpenAI ---
       const params = {
         model,
-        messages: [{ role: 'system', content: (systemPrompt || '') + (systemDynamic || '') }, ...messages],
+        messages: [{ role: 'system', content: (systemPrompt || '') + (systemDynamic || '') }, ...sanitizeForOpenAI(messages)],
         max_tokens: 400,   // voz/chat: respuestas cortas; menos tokens = menor latencia
         temperature: 0.7,
       };
@@ -159,15 +181,21 @@ async function chat({ systemPrompt, systemDynamic = '', messages, tools = [], fo
     const isNotSonnet  = model !== MODEL_SMART;
 
     // Si el modelo rápido (Haiku) falló por deprecado o rate-limit → Sonnet
-    if (model.startsWith('claude') && (isNotFound || isRateLimit) && isNotSonnet) {
+    if (model.startsWith('claude') && (isNotFound || isRateLimit) && isNotSonnet && !_noCrossFallback) {
       console.warn(`[LLMRouter] ${model} no disponible (${err.status}), escalando a ${MODEL_SMART}`);
-      return chat({ systemPrompt, messages, tools, forceModel: MODEL_SMART });
+      return chat({ systemPrompt, systemDynamic, messages, tools, forceModel: MODEL_SMART });
     }
 
-    // Si era un modelo OpenAI → Claude Sonnet
-    if (!model.startsWith('claude')) {
-      console.error(`[LLMRouter] ${model} falló, fallback a ${MODEL_SMART}:`, err.message);
-      return chat({ systemPrompt, messages, tools, forceModel: MODEL_SMART });
+    // FALLBACK CRUZADO de proveedor (una sola vez, sin recursión infinita):
+    // cualquier fallo restante de un proveedor → intentar con el otro.
+    // Cubre créditos agotados (400 billing / 402), 401, 429, 5xx y caídas.
+    if (!_noCrossFallback) {
+      const other = model.startsWith('claude') ? MODEL_XFALL : MODEL_SMART;
+      const hasKey = other.startsWith('claude') ? !!process.env.ANTHROPIC_API_KEY : !!process.env.OPENAI_API_KEY;
+      if (hasKey && other !== model) {
+        console.error(`[LLMRouter] ${model} falló (${err.status || 'net'}), fallback cruzado a ${other}:`, err.message?.slice(0, 120));
+        return chat({ systemPrompt, systemDynamic, messages, tools, forceModel: other, _noCrossFallback: true });
+      }
     }
 
     console.error(`[LLMRouter] ${model} falló sin fallback:`, err.message);

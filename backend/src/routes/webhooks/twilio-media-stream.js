@@ -119,6 +119,7 @@ async function mediaStreamRoutes(app) {
     let closed      = false;
     let dgKeepAlive = null;     // intervalo KeepAlive de Deepgram
     let dgReconnects = 0;       // reconexiones de Deepgram en esta llamada
+    let llmFailCount = 0;       // circuit breaker: fallos LLM consecutivos
 
     let speakChain      = Promise.resolve();   // serializa los speaks
     let currentAudioEnd = null;                // resuelve el sendAudio en curso (barge-in)
@@ -219,6 +220,7 @@ async function mediaStreamRoutes(app) {
         const t0 = Date.now();
         const { ended, outcome, transferTo } = await voiceAgent.processTurnStreaming(callSid, text, { onSentence });
         log('respuesta lista', { ms: Date.now() - t0, ended, outcome });
+        llmFailCount = 0;   // turno exitoso → resetear el circuit breaker
 
         processing = false;
         await fillersDone;
@@ -258,7 +260,22 @@ async function mediaStreamRoutes(app) {
         app.log.error({ err, callSid }, '[MediaStream] Error en processTurnStreaming');
         processing = false;
         await fillersDone.catch(() => {});
-        if (myTurn === turnSeq && !closed) await say('Disculpa, tuve un problema. ¿Puedes repetirlo?');
+        if (myTurn !== turnSeq || closed) return;
+
+        // ── Circuit breaker: si el LLM falla 2 veces seguidas (créditos
+        //    agotados, proveedor caído), NO dejamos al cliente en un bucle de
+        //    "tuve un problema": despedida digna + colgar. El lead/registro de
+        //    la llamada ya queda en conversations para seguimiento humano.
+        llmFailCount++;
+        if (llmFailCount >= 2) {
+          log('circuit breaker: LLM caído, cerrando llamada con cortesía', { fails: llmFailCount });
+          await say('Lo siento, estamos teniendo un problema técnico en este momento. Un asesor te devolverá la llamada muy pronto. Gracias por tu paciencia.');
+          await speakChain;
+          cleanup();
+          if (ws.readyState === 1) ws.close();
+          return;
+        }
+        await say('Disculpa, tuve un problema. ¿Puedes repetirlo?');
       }
     }
 

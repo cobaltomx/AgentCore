@@ -12,7 +12,9 @@
 async function notificationsRoutes(app) {
 
   // ── GET /api/v1/notifications ──────────────────────────────────────────────
-  app.get('/', { onRequest: [app.requireTenant] }, async (req) => {
+  // logLevel warn: el frontend hace polling continuo y a nivel info estas
+  // requests ahogan los logs (miles de líneas/día que entierran lo importante).
+  app.get('/', { onRequest: [app.requireTenant], logLevel: 'warn' }, async (req) => {
     const since = parseInt(req.query.since) || 0;
 
     if (since > 0) {
@@ -58,7 +60,7 @@ async function notificationsRoutes(app) {
   });
 
   // ── GET /api/v1/notifications/stream — SSE ────────────────────────────────
-  app.get('/stream', { onRequest: [app.requireTenant] }, async (req, reply) => {
+  app.get('/stream', { onRequest: [app.requireTenant], logLevel: 'warn' }, async (req, reply) => {
     // Tomar control del socket — Fastify no cerrará la respuesta
     reply.hijack();
     const res = reply.raw;
