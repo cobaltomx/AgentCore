@@ -59,8 +59,8 @@ function renderNavbar(string $pageTitle = ''): void {
   <!-- Botón colapsar sidebar -->
   <div class="navbar-nav align-items-xl-center me-3 me-xl-0">
     <a class="nav-item nav-link px-0 me-xl-2" href="javascript:void(0)" id="navbarSidebarToggle"
-       title="Colapsar / expandir menú">
-      <i class="bx bx-menu bx-sm"></i>
+       title="Colapsar / expandir menú" aria-label="Colapsar o expandir menú lateral" role="button">
+      <i class="bx bx-menu bx-sm" aria-hidden="true"></i>
     </a>
   </div>
 
@@ -76,8 +76,9 @@ function renderNavbar(string $pageTitle = ''): void {
       <!-- ── Toggle Dark / Light ──────────────────────────────── -->
       <li class="nav-item me-2 me-xl-1">
         <a class="nav-link" href="javascript:void(0);" id="themeToggleBtn"
-           title="Cambiar tema claro/oscuro" data-bs-toggle="tooltip">
-          <i class="bx bx-sm" id="themeToggleIcon"></i>
+           title="Cambiar tema claro/oscuro" data-bs-toggle="tooltip"
+           aria-label="Cambiar entre tema claro y oscuro" role="button">
+          <i class="bx bx-sm" id="themeToggleIcon" aria-hidden="true"></i>
         </a>
       </li>
 
@@ -86,9 +87,9 @@ function renderNavbar(string $pageTitle = ''): void {
         <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
            id="notifToggle"
            data-bs-toggle="dropdown" data-bs-auto-close="outside"
-           aria-expanded="false">
-          <i class="bx bx-bell bx-sm"></i>
-          <span class="badge bg-danger rounded-pill badge-notifications d-none" id="notif-badge">0</span>
+           aria-expanded="false" aria-label="Notificaciones" role="button">
+          <i class="bx bx-bell bx-sm" aria-hidden="true"></i>
+          <span class="badge bg-danger rounded-pill badge-notifications d-none" id="notif-badge" aria-live="polite">0</span>
         </a>
 
         <ul class="dropdown-menu dropdown-menu-end py-0" style="min-width:340px;max-width:380px" id="notif-dropdown">
@@ -129,7 +130,7 @@ function renderNavbar(string $pageTitle = ''): void {
       <!-- ── Perfil ──────────────────────────────────────────── -->
       <li class="nav-item navbar-dropdown dropdown-user dropdown">
         <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
-           data-bs-toggle="dropdown">
+           data-bs-toggle="dropdown" aria-label="Menú de mi cuenta" role="button" aria-expanded="false">
           <div class="avatar avatar-online">
             <?php if ($avatarSrc): ?>
               <img src="<?= e($avatarSrc) ?>" alt="<?= e($name) ?>" class="rounded-circle">
@@ -210,5 +211,16 @@ function renderNavbar(string $pageTitle = ''): void {
     </ul>
   </div>
 </nav>
+<script>
+// Accesibilidad: destino del skip-link ("Saltar al contenido principal")
+document.addEventListener('DOMContentLoaded', function () {
+  var main = document.querySelector('.content-wrapper');
+  if (main && !document.getElementById('main-content')) {
+    main.id = 'main-content';
+    main.setAttribute('role', 'main');
+    main.setAttribute('tabindex', '-1');
+  }
+});
+</script>
 <?php
 }

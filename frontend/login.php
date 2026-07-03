@@ -17,9 +17,10 @@ $forbidden  = isset($_GET['forbidden']);
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Iniciar sesión — <?= e(APP_NAME) ?></title>
   <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico"/>
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="/assets/css/agentcore-theme.css"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body {

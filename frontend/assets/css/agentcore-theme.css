@@ -1,0 +1,142 @@
+/* ================================================================
+   AgentCore — Tema minimalista (capa sobre Sneat + dashboard.css)
+   Sistema de diseño: "Data-Dense Dashboard, minimal"
+   - Tipografía Inter, jerarquía clara
+   - Paleta neutra + UN acento (índigo refinado, contraste AA)
+   - Cards con borde sutil en vez de sombras pesadas
+   - Accesibilidad: foco visible, contraste 4.5:1, reduced-motion
+   Cárgese DESPUÉS de dashboard.css.
+   ================================================================ */
+
+:root {
+  /* Acento único. #5f61e6 da ~4.6:1 sobre blanco (AA) vs #696cff (3.9:1). */
+  --ac-primary:        #5f61e6;
+  --ac-primary-hover:  #4f51d8;
+  --ac-primary-soft:   rgba(95, 97, 230, .10);
+  /* Neutros con contraste correcto sobre blanco */
+  --ac-text:           #24292f;   /* 12.6:1 */
+  --ac-text-muted:     #5c6572;   /* 6.2:1 — sustituye grises ilegibles */
+  --ac-border:         #e6e9ef;
+  --ac-surface:        #ffffff;
+  --ac-bg:             #f7f8fa;
+  --ac-radius:         .625rem;
+}
+
+/* ── Tipografía ─────────────────────────────────────────────── */
+body {
+  font-family: 'Inter', 'Public Sans', system-ui, -apple-system, sans-serif;
+  color: var(--ac-text);
+  background: var(--ac-bg);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, h5, h6, .card-title { font-weight: 600; letter-spacing: -0.01em; color: var(--ac-text); }
+.text-muted { color: var(--ac-text-muted) !important; }   /* contraste AA */
+small, .small { line-height: 1.5; }
+
+/* ── Superficies: borde sutil > sombra pesada ───────────────── */
+.card {
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+.card:hover { box-shadow: 0 1px 3px rgba(16, 24, 40, .07); }
+.card .card-header { border-bottom: 1px solid var(--ac-border); background: transparent; }
+.modal-content { border-radius: var(--ac-radius); border: 1px solid var(--ac-border); }
+
+/* ── Acento único (botones, links, activos) ─────────────────── */
+.btn-primary {
+  background: var(--ac-primary);
+  border-color: var(--ac-primary);
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+  background: var(--ac-primary-hover) !important;
+  border-color: var(--ac-primary-hover) !important;
+}
+.btn { border-radius: .5rem; transition: background-color .18s ease, border-color .18s ease, color .18s ease; }
+a { color: var(--ac-primary); }
+a:hover { color: var(--ac-primary-hover); }
+.text-primary { color: var(--ac-primary) !important; }
+.bg-primary { background-color: var(--ac-primary) !important; }
+.bg-label-primary { background: var(--ac-primary-soft) !important; color: var(--ac-primary) !important; }
+.page-item.active .page-link { background: var(--ac-primary); border-color: var(--ac-primary); }
+.form-check-input:checked { background-color: var(--ac-primary); border-color: var(--ac-primary); }
+.nav-pills .nav-link.active { background: var(--ac-primary); }
+
+/* ── Sidebar minimalista ────────────────────────────────────── */
+.bg-menu-theme { border-right: 1px solid var(--ac-border); }
+.bg-menu-theme .menu-item.active > .menu-link {
+  background: var(--ac-primary-soft) !important;
+  color: var(--ac-primary) !important;
+  border-radius: .5rem;
+}
+.bg-menu-theme .menu-item.active > .menu-link:before { display: none; } /* sin barra lateral ruidosa */
+.bg-menu-theme .menu-link { border-radius: .5rem; transition: background-color .15s ease; }
+
+/* ── Tablas: legibles y aireadas ────────────────────────────── */
+.table > :not(caption) > * > * { padding: .65rem .9rem; }
+.table thead th {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--ac-text-muted); font-weight: 600; border-bottom: 1px solid var(--ac-border);
+}
+.table-hover tbody tr { transition: background-color .12s ease; }
+.table-hover tbody tr:hover { background: #f4f6fa; cursor: default; }
+
+/* ── Formularios ────────────────────────────────────────────── */
+.form-control, .form-select {
+  border-radius: .5rem; border-color: var(--ac-border);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--ac-primary);
+  box-shadow: 0 0 0 3px var(--ac-primary-soft);
+}
+.form-label { font-weight: 500; color: var(--ac-text); }
+
+/* ── ACCESIBILIDAD ──────────────────────────────────────────── */
+/* Foco visible para navegación por teclado (nunca quitar outline sin sustituto) */
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
+.btn:focus-visible, .nav-link:focus-visible, .menu-link:focus-visible,
+.form-control:focus-visible, .form-select:focus-visible, .form-check-input:focus-visible {
+  outline: 2px solid var(--ac-primary) !important;
+  outline-offset: 2px;
+  border-radius: .375rem;
+}
+/* Skip link (aparece al tabular) */
+.skip-link {
+  position: absolute; left: -9999px; z-index: 10000;
+  background: var(--ac-primary); color: #fff; padding: .6rem 1rem;
+  border-radius: 0 0 .5rem 0; font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { left: 0; top: 0; }
+/* Objetivos táctiles mínimos 44px en iconos de acción */
+.navbar .nav-link, .btn-sm { min-height: 2.35rem; display: inline-flex; align-items: center; }
+/* Cursor en todo lo clickeable */
+[data-bs-toggle], [onclick], .cursor-pointer, .menu-link, .dropdown-item { cursor: pointer; }
+
+/* Movimiento reducido: respetar la preferencia del usuario */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Dark mode: mantener contraste y bordes visibles ────────── */
+html[data-theme="dark"] body, body.dark-style {
+  --ac-text: #e7eaf0;
+  --ac-text-muted: #a3adbd;
+  --ac-border: #33394a;
+  --ac-surface: #232733;
+  --ac-bg: #1a1d27;
+}
+html[data-theme="dark"] .card, body.dark-style .card { background: var(--ac-surface); }
+html[data-theme="dark"] .table-hover tbody tr:hover { background: rgba(255,255,255,.04); }
+
+/* ── Detalles que quitan ruido ──────────────────────────────── */
+.breadcrumb { margin-bottom: .5rem; }
+.badge { font-weight: 500; letter-spacing: 0; }
+.dropdown-menu { border: 1px solid var(--ac-border); border-radius: var(--ac-radius); box-shadow: 0 8px 24px rgba(16,24,40,.10); }
+.toast, .alert { border-radius: var(--ac-radius); }
+::selection { background: var(--ac-primary-soft); }

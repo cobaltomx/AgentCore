@@ -41,7 +41,7 @@ function renderHead(string $title = 'Dashboard', string $pageClass = ''): void {
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <!-- Sneat core CSS (local) -->
   <link rel="stylesheet" href="/assets/vendor/css/core.css"/>
@@ -56,7 +56,11 @@ function renderHead(string $title = 'Dashboard', string $pageClass = ''): void {
   <!-- AgentCore overrides (cache-buster por mtime para forzar reload tras cambios) -->
   <?php $cssDashPath = __DIR__ . '/../assets/css/dashboard.css'; ?>
   <link rel="stylesheet" href="/assets/css/dashboard.css?v=<?= file_exists($cssDashPath) ? filemtime($cssDashPath) : APP_VERSION ?>"/>
+  <!-- Tema minimalista AgentCore (tipografía Inter, contraste AA, foco visible) -->
+  <?php $cssThemePath = __DIR__ . '/../assets/css/agentcore-theme.css'; ?>
+  <link rel="stylesheet" href="/assets/css/agentcore-theme.css?v=<?= file_exists($cssThemePath) ? filemtime($cssThemePath) : APP_VERSION ?>"/>
 </head>
 <body class="<?= e($pageClass) ?>">
+<a class="skip-link" href="#main-content">Saltar al contenido principal</a>
 <?php
 }
