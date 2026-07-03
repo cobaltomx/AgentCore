@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentCore — Manual de Usuario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: #f5f5ff;
+  color: #2d2d4e;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+/* ── Variables ───────────────────────────────────────────────────── */
+:root {
+  --primary: #696cff;
+  --primary-dark: #5558e3;
+  --primary-light: #eeeeff;
+  --primary-muted: rgba(105,108,255,.12);
+  --success: #28c76f;
+  --warning: #ff9f43;
+  --danger: #ea5455;
+  --info: #00cfe8;
+  --text: #2d2d4e;
+  --muted: #7780a1;
+  --border: #e4e6f3;
+  --bg: #f5f5ff;
+  --card: #ffffff;
+  --sidebar-w: 272px;
+  --header-h: 64px;
+  --radius: 12px;
+  --shadow: 0 2px 16px rgba(105,108,255,.10);
+  --shadow-md: 0 4px 24px rgba(105,108,255,.15);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d0d3f7; border-radius: 3px; }
+
+/* ── Topbar ──────────────────────────────────────────────────────── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--header-h);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 1.5rem;
+  gap: 1rem;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: .625rem;
+  font-weight: 800; font-size: 1.15rem; color: var(--primary);
+  text-decoration: none; white-space: nowrap;
+}
+.topbar-logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg,#696cff,#9b5de5);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.topbar-logo-icon svg { color: #fff; }
+.topbar-search {
+  flex: 1; max-width: 440px;
+  position: relative;
+}
+.topbar-search input {
+  width: 100%; padding: .5rem .75rem .5rem 2.4rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  background: #f8f8ff; font-family: inherit; font-size: .875rem;
+  color: var(--text); outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.topbar-search input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(105,108,255,.12);
+  background: #fff;
+}
+.topbar-search .search-icon {
+  position: absolute; left: .7rem; top: 50%; transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+}
+.no-results-msg {
+  display: none;
+  text-align: center; padding: 2rem; color: var(--muted); font-size: .9rem;
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+.topbar-badge {
+  background: var(--primary-light); color: var(--primary);
+  font-size: .72rem; font-weight: 700; padding: .25rem .6rem;
+  border-radius: 20px; white-space: nowrap;
+}
+.hamburger {
+  display: none; cursor: pointer; padding: .4rem;
+  border: none; background: none; color: var(--text);
+}
+@media (max-width: 900px) {
+  .hamburger { display: flex; }
+  .topbar-search { max-width: 200px; }
+}
+@media (max-width: 500px) {
+  .topbar-search { display: none; }
+}
+
+/* ── Layout ──────────────────────────────────────────────────────── */
+.layout {
+  display: flex;
+  padding-top: var(--header-h);
+  min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  position: fixed;
+  top: var(--header-h);
+  bottom: 0;
+  left: 0;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 0 2rem;
+  transition: transform .3s ease;
+  z-index: 90;
+}
+.sidebar-section-label {
+  font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+  padding: 1.2rem 1.25rem .5rem;
+}
+.sidebar-link {
+  display: flex; align-items: center; gap: .625rem;
+  padding: .5rem 1.25rem;
+  font-size: .84rem; font-weight: 500; color: var(--muted);
+  text-decoration: none; cursor: pointer;
+  border-radius: 0;
+  transition: color .18s, background .18s;
+  border-left: 3px solid transparent;
+}
+.sidebar-link:hover { color: var(--primary); background: var(--primary-muted); }
+.sidebar-link.active {
+  color: var(--primary); background: var(--primary-muted);
+  border-left-color: var(--primary); font-weight: 600;
+}
+.sidebar-link svg { flex-shrink: 0; }
+.sidebar-progress {
+  padding: 1.5rem 1.25rem .5rem;
+  font-size: .75rem; color: var(--muted);
+}
+.progress-bar {
+  height: 4px; background: var(--border); border-radius: 2px; margin-top: .4rem; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg,var(--primary),#9b5de5);
+  border-radius: 2px; transition: width .4s ease;
+  width: 0%;
+}
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 89;
+}
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+}
+
+/* ── Main ────────────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  min-width: 0;
+}
+@media (max-width: 900px) { .main { margin-left: 0; } }
+
+/* ── Hero ────────────────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, #4a4db5 0%, #696cff 40%, #9b5de5 70%, #c77dff 100%);
+  padding: 5rem 3rem 5rem;
+  position: relative; overflow: hidden;
+  text-align: center;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.25);
+  color: #fff; font-size: .78rem; font-weight: 600;
+  padding: .35rem .85rem; border-radius: 20px; margin-bottom: 1.5rem;
+  position: relative;
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 800; color: #fff; line-height: 1.15;
+  margin-bottom: 1.25rem; position: relative;
+}
+.hero h1 span { opacity: .75; }
+.hero-desc {
+  font-size: 1.05rem; color: rgba(255,255,255,.85);
+  max-width: 560px; margin: 0 auto 2.5rem; position: relative;
+}
+.hero-stats {
+  display: flex; justify-content: center; gap: 2rem;
+  flex-wrap: wrap; position: relative;
+}
+.hero-stat {
+  background: rgba(255,255,255,.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.2);
+  padding: .75rem 1.5rem; border-radius: 10px;
+  text-align: center;
+}
+.hero-stat-val { font-size: 1.5rem; font-weight: 800; color: #fff; }
+.hero-stat-lbl { font-size: .75rem; color: rgba(255,255,255,.75); }
+.hero-wave {
+  position: absolute; bottom: -1px; left: 0; right: 0;
+}
+
+/* ── Content wrapper ─────────────────────────────────────────────── */
+.content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+@media (max-width: 600px) { .content { padding: 2rem 1rem 4rem; } }
+
+/* ── Section ─────────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 4rem;
+  scroll-margin-top: calc(var(--header-h) + 1rem);
+}
+.section-header {
+  display: flex; align-items: flex-start; gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.section-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: .15rem;
+}
+.section-icon svg { color: var(--primary); }
+.section-title {
+  font-size: 1.5rem; font-weight: 800; color: var(--text);
+  line-height: 1.2; margin-bottom: .35rem;
+}
+.section-desc { color: var(--muted); font-size: .925rem; }
+
+/* ── Card ────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: hidden; margin-bottom: 1.25rem;
+}
+.card-header {
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+  font-weight: 700; font-size: .9rem; color: var(--text);
+  display: flex; align-items: center; gap: .5rem;
+}
+.card-body { padding: 1.25rem; }
+
+/* ── Steps ───────────────────────────────────────────────────────── */
+.steps { list-style: none; display: flex; flex-direction: column; gap: .875rem; }
+.step {
+  display: flex; align-items: flex-start; gap: .875rem;
+}
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  font-size: .8rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: .1rem;
+}
+.step-content { flex: 1; }
+.step-title { font-weight: 600; font-size: .9rem; color: var(--text); }
+.step-desc { font-size: .85rem; color: var(--muted); margin-top: .2rem; }
+
+/* ── Callouts ────────────────────────────────────────────────────── */
+.callout {
+  border-radius: 10px; padding: .9rem 1.1rem;
+  display: flex; gap: .75rem; align-items: flex-start;
+  margin: 1rem 0; font-size: .875rem;
+}
+.callout-icon { flex-shrink: 0; margin-top: .05rem; }
+.callout-text strong { display: block; margin-bottom: .15rem; font-size: .875rem; }
+.callout-text p { margin: 0; font-size: .85rem; }
+.callout.tip    { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+.callout.tip .callout-icon { color: #22c55e; }
+.callout.warn   { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+.callout.warn .callout-icon { color: #f59e0b; }
+.callout.info   { background: #eff6ff; border: 1px solid #93c5fd; color: #1e40af; }
+.callout.info .callout-icon { color: #3b82f6; }
+.callout.danger { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+.callout.danger .callout-icon { color: #ef4444; }
+
+/* ── Badge ───────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .2rem .55rem; border-radius: 6px;
+  font-size: .75rem; font-weight: 600;
+}
+.badge-primary { background: var(--primary-light); color: var(--primary); }
+.badge-success { background: #f0fdf4; color: #166534; }
+.badge-warning { background: #fffbeb; color: #92400e; }
+.badge-danger  { background: #fef2f2; color: #991b1b; }
+.badge-neutral { background: #f1f5f9; color: #475569; }
+
+/* ── Feature grid ────────────────────────────────────────────────── */
+.feature-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: .875rem; margin: 1rem 0;
+}
+.feature-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem;
+  display: flex; flex-direction: column; gap: .35rem;
+}
+.feature-card-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .25rem;
+}
+.feature-card-title { font-weight: 700; font-size: .875rem; }
+.feature-card-desc  { font-size: .8rem; color: var(--muted); }
+
+/* ── Steps wizard (horizontal) ───────────────────────────────────── */
+.wizard-steps {
+  display: flex; gap: 0; margin: 1.25rem 0; position: relative;
+  overflow-x: auto; padding-bottom: .5rem;
+}
+.wizard-step {
+  flex: 1; min-width: 100px; text-align: center;
+  position: relative; padding: 0 .5rem;
+}
+.wizard-step::after {
+  content: '';
+  position: absolute; top: 18px; left: 50%; width: 100%;
+  height: 2px; background: var(--border); z-index: 0;
+}
+.wizard-step:last-child::after { display: none; }
+.ws-dot {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  font-weight: 700; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto .5rem; position: relative; z-index: 1;
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+.ws-label { font-size: .75rem; font-weight: 600; color: var(--text); }
+
+/* ── Table ───────────────────────────────────────────────────────── */
+.doc-table {
+  width: 100%; border-collapse: collapse; font-size: .875rem;
+  border-radius: 10px; overflow: hidden; border: 1px solid var(--border);
+}
+.doc-table th {
+  background: var(--primary-light); color: var(--primary);
+  font-weight: 700; padding: .65rem 1rem; text-align: left;
+  font-size: .8rem; text-transform: uppercase; letter-spacing: .04em;
+}
+.doc-table td {
+  padding: .65rem 1rem; border-top: 1px solid var(--border);
+  color: var(--text);
+}
+.doc-table tr:hover td { background: #fafaff; }
+
+/* ── Divider ─────────────────────────────────────────────────────── */
+.divider {
+  border: none; border-top: 1px solid var(--border);
+  margin: 3rem 0;
+}
+
+/* ── Kbd ─────────────────────────────────────────────────────────── */
+kbd {
+  background: #f1f5f9; border: 1px solid #cbd5e1;
+  border-bottom-width: 2px; border-radius: 5px;
+  padding: .15rem .45rem; font-family: monospace;
+  font-size: .78rem; color: var(--text);
+}
+
+/* ── Code ────────────────────────────────────────────────────────── */
+code {
+  background: var(--primary-light); color: var(--primary);
+  border-radius: 4px; padding: .15rem .4rem;
+  font-family: 'JetBrains Mono', monospace; font-size: .82em;
+}
+
+/* ── Print ───────────────────────────────────────────────────────── */
+@media print {
+  .sidebar, .topbar, .hamburger, .sidebar-overlay { display: none !important; }
+  .main { margin-left: 0 !important; }
+  body { background: #fff; }
+  .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ── Quick actions (section top buttons) ─────────────────────────── */
+.quick-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.quick-btn {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: var(--card); border: 1.5px solid var(--border);
+  color: var(--text); border-radius: 8px;
+  padding: .4rem .85rem; font-size: .8rem; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  transition: border-color .18s, color .18s, background .18s;
+}
+.quick-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-muted); }
+
+/* ── Tag list ────────────────────────────────────────────────────── */
+.tag-list { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+
+/* ── Inline icon helper ───────────────────────────────────────────── */
+.icon-inline { display: inline-flex; align-items: center; vertical-align: middle; margin: 0 .15rem; }
+</style>
+</head>
+<body>
+
+<!-- ── Topbar ──────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <a href="#inicio" class="topbar-logo">
+    <div class="topbar-logo-icon">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    </div>
+    AgentCore
+  </a>
+  <div class="topbar-search">
+    <span class="search-icon">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </span>
+    <input type="text" id="searchInput" placeholder="Buscar en el manual…" autocomplete="off">
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-badge">v1.0</span>
+  </div>
+</header>
+
+<!-- ── Sidebar Overlay ─────────────────────────────────────────────── -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ── Layout ──────────────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-progress">
+      <span>Progreso de lectura</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="sidebar-section-label">Inicio</div>
+    <a class="sidebar-link" href="#inicio" data-section="inicio">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Introducción
+    </a>
+    <div class="sidebar-section-label">Configuración</div>
+    <a class="sidebar-link" href="#onboarding" data-section="onboarding">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Primeros pasos
+    </a>
+    <a class="sidebar-link" href="#configuracion" data-section="configuracion">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.414 1.414M12 2v2M12 20v2M4.93 4.93 6.34 6.34M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      Configuración
+    </a>
+    <div class="sidebar-section-label">Core</div>
+    <a class="sidebar-link" href="#dashboard" data-section="dashboard">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="sidebar-link" href="#agentes" data-section="agentes">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+      Agentes IA
+    </a>
+    <a class="sidebar-link" href="#conversaciones" data-section="conversaciones">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Conversaciones
+    </a>
+    <a class="sidebar-link" href="#leads" data-section="leads">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Leads
+    </a>
+    <a class="sidebar-link" href="#citas" data-section="citas">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Citas
+    </a>
+    <a class="sidebar-link" href="#campanas" data-section="campanas">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Campañas
+    </a>
+    <div class="sidebar-section-label">Recursos</div>
+    <a class="sidebar-link" href="#conocimiento" data-section="conocimiento">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+      Base de conocimiento
+    </a>
+    <a class="sidebar-link" href="#reportes" data-section="reportes">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Reportes
+    </a>
+    <a class="sidebar-link" href="#facturacion" data-section="facturacion">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Facturación
+    </a>
+    <a class="sidebar-link" href="#usuarios" data-section="usuarios">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Usuarios
+    </a>
+    <a class="sidebar-link" href="#notificaciones" data-section="notificaciones">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notificaciones
+    </a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hero -->
+    <section class="hero" id="inicio">
+      <div class="hero-eyebrow">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Manual de Usuario — AgentCore
+      </div>
+      <h1>Tu agente IA,<br><span>siempre disponible</span></h1>
+      <p class="hero-desc">Guía completa para configurar, gestionar y sacarle el máximo provecho a tu plataforma de agentes de inteligencia artificial.</p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-val">13</div>
+          <div class="hero-stat-lbl">Secciones</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">24/7</div>
+          <div class="hero-stat-lbl">Soporte IA</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">2</div>
+          <div class="hero-stat-lbl">Canales (Voz + WA)</div>
+        </div>
+      </div>
+      <svg class="hero-wave" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 48" fill="#f5f5ff"><path d="M0,48 C360,0 1080,0 1440,48 L1440,48 L0,48 Z"/></svg>
+    </section>
+
+    <!-- Content -->
+    <div class="content">
+      <div id="no-results-msg" class="no-results-msg">
+        <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 1rem;display:block;opacity:.4"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        No se encontraron resultados para tu búsqueda.
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 1: PRIMEROS PASOS -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="onboarding" data-title="Primeros pasos Onboarding wizard configuración inicial">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Primeros pasos</h2>
+            <p class="section-desc">El wizard de onboarding te guía en 5 pasos para dejar tu agente listo en menos de 10 minutos.</p>
+          </div>
+        </div>
+
+        <div class="wizard-steps">
+          <div class="wizard-step"><div class="ws-dot">1</div><div class="ws-label">Negocio</div></div>
+          <div class="wizard-step"><div class="ws-dot">2</div><div class="ws-label">Agente IA</div></div>
+          <div class="wizard-step"><div class="ws-dot">3</div><div class="ws-label">Teléfono</div></div>
+          <div class="wizard-step"><div class="ws-dot">4</div><div class="ws-label">Conocimiento</div></div>
+          <div class="wizard-step"><div class="ws-dot" style="background:var(--success)">5</div><div class="ws-label">¡Listo!</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Paso a paso
+          </div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Información del negocio</div>
+                  <div class="step-desc">Ingresa el nombre de tu empresa, selecciona la industria (médica, dental, servicios, restaurante, etc.) y describe el objetivo principal del agente. Esto personaliza los mensajes automáticamente.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Configura el Agente IA</div>
+                  <div class="step-desc">Elige el nombre del agente, el idioma (Español MX), el mensaje de bienvenida y la voz. Puedes escuchar una preview de cada voz antes de confirmar.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Conecta tu número Twilio <span class="badge badge-neutral">Opcional</span></div>
+                  <div class="step-desc">Pega tu Account SID, Auth Token y número de teléfono de Twilio. Si no tienes esto aún, puedes omitirlo y configurarlo después desde Ajustes → Twilio.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                  <div class="step-title">Base de conocimiento <span class="badge badge-neutral">Opcional</span></div>
+                  <div class="step-desc">Agrega información que el agente usará para responder preguntas: texto libre, preguntas frecuentes (FAQ) o una URL de tu sitio web para que el sistema extraiga la información.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                  <div class="step-title">¡Tu agente está listo!</div>
+                  <div class="step-desc">Verás un resumen con todo lo configurado. Desde aquí puedes ir directamente a probar tu agente o a completar la configuración avanzada.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <div class="callout-text"><strong>Consejo</strong><p>El onboarding solo aparece una vez. Si quieres repetirlo, contacta a soporte. Puedes modificar cada ajuste individualmente desde el menú correspondiente.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 2: DASHBOARD -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="dashboard" data-title="Dashboard métricas KPI conversaciones leads resumen">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Dashboard</h2>
+            <p class="section-desc">Vista central con las métricas más importantes de tu negocio en tiempo real.</p>
+          </div>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-card-icon" style="background:#eeeeff"><svg width="20" height="20" fill="none" stroke="#696cff" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+            <div class="feature-card-title">Conversaciones del día</div>
+            <div class="feature-card-desc">Total de llamadas y chats atendidos hoy vs. ayer.</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card-icon" style="background:#f0fdf4"><svg width="20" height="20" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div class="feature-card-title">Nuevos leads</div>
+            <div class="feature-card-desc">Contactos capturados automáticamente por el agente.</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card-icon" style="background:#fffbeb"><svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div class="feature-card-title">Citas agendadas</div>
+            <div class="feature-card-desc">Citas programadas por el agente este mes.</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card-icon" style="background:#fef2f2"><svg width="20" height="20" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="feature-card-title">Minutos usados</div>
+            <div class="feature-card-desc">Consumo del mes vs. límite de tu plan.</div>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+          <div class="callout-text"><strong>¿Ves el gráfico vacío?</strong><p>Es normal si acabas de configurar. Los datos aparecen conforme el agente atiende llamadas y chats.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 3: AGENTES IA -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="agentes" data-title="Agentes IA crear configurar voz WhatsApp activar desactivar toggle">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Agentes IA</h2>
+            <p class="section-desc">Crea y gestiona los agentes de inteligencia artificial que atienden a tus clientes.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Crear un nuevo agente
+          </div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Ir a <strong>Agentes IA</strong> en el menú lateral</div>
+                  <div class="step-desc">Verás las tarjetas de tus agentes existentes y un botón <span class="badge badge-primary">+ Nuevo agente</span> en la esquina superior derecha.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Haz clic en <strong>Configurar</strong> o <strong>Nuevo agente</strong></div>
+                  <div class="step-desc">Se abre el editor estructurado con pestañas: Básico, Voz, Especialidades, Horario, Avanzado.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Configura las pestañas</div>
+                  <div class="step-desc">Define el nombre del negocio, el saludo, los servicios ofrecidos, el horario de atención y el modelo de IA. No necesitas saber programar.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                  <div class="step-title">Guarda y activa el agente</div>
+                  <div class="step-desc">Usa el toggle de la tarjeta para activar o desactivar el agente en cualquier momento sin borrarlo.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <table class="doc-table" style="margin-top:1rem">
+          <thead>
+            <tr><th>Canal</th><th>Descripción</th><th>Requiere</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="badge badge-primary">Voz</span></td><td>Atiende llamadas telefónicas entrantes y salientes</td><td>Número Twilio</td></tr>
+            <tr><td><span class="badge badge-success">WhatsApp</span></td><td>Responde mensajes de WhatsApp Business</td><td>Meta Business API</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout warn" style="margin-top:1rem">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <div class="callout-text"><strong>Límite de agentes</strong><p>Tu plan determina cuántos agentes puedes crear. Si el botón <em>Nuevo agente</em> aparece deshabilitado, revisa tu plan en <strong>Facturación</strong>.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 4: CONVERSACIONES -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="conversaciones" data-title="Conversaciones historial transcripción llamadas grabación audio tool calls detalle">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Conversaciones</h2>
+            <p class="section-desc">Revisa el historial completo de todas las interacciones — llamadas y WhatsApp — con transcripción detallada.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Lista de conversaciones
+          </div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Filtrar por canal, estado o agente</div>
+                  <div class="step-desc">Usa los filtros en la parte superior para encontrar conversaciones específicas por teléfono, fecha o resultado (<em>lead capturado</em>, <em>cita agendada</em>, etc.).</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Abrir el detalle</div>
+                  <div class="step-desc">Haz clic en cualquier fila para ver la transcripción completa, los datos del contacto y la grabación de audio (si está disponible).</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            ¿Qué ves en el detalle?
+          </div>
+          <div class="card-body">
+            <div class="feature-grid">
+              <div class="feature-card">
+                <div class="feature-card-icon" style="background:#eeeeff"><svg width="18" height="18" fill="none" stroke="#696cff" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                <div class="feature-card-title">Transcripción visual</div>
+                <div class="feature-card-desc">Burbujas de chat mostrando lo que dijo el usuario y lo que respondió el agente.</div>
+              </div>
+              <div class="feature-card">
+                <div class="feature-card-icon" style="background:#f0fdf4"><svg width="18" height="18" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></div>
+                <div class="feature-card-title">Grabación de audio</div>
+                <div class="feature-card-desc">Reproduce y descarga el audio de la llamada completa.</div>
+              </div>
+              <div class="feature-card">
+                <div class="feature-card-icon" style="background:#fffbeb"><svg width="18" height="18" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+                <div class="feature-card-title">Tool calls</div>
+                <div class="feature-card-desc">Acciones del agente: agendó cita, guardó lead, consultó disponibilidad.</div>
+              </div>
+              <div class="feature-card">
+                <div class="feature-card-icon" style="background:#eff6ff"><svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+                <div class="feature-card-title">Métricas de IA</div>
+                <div class="feature-card-desc">Tokens usados, costo estimado, latencia promedio y modelo usado.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 5: LEADS -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="leads" data-title="Leads contactos prospectos estado asignar equipo">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Leads</h2>
+            <p class="section-desc">Gestiona todos los contactos capturados automáticamente por el agente IA durante las conversaciones.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Estados de un lead</div>
+          <div class="card-body">
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:.75rem">
+              <span class="badge badge-warning">Nuevo</span>
+              <span class="badge badge-primary">Contactado</span>
+              <span class="badge" style="background:#eff6ff;color:#1e40af">Calificado</span>
+              <span class="badge badge-success">Convertido</span>
+              <span class="badge badge-neutral">Perdido</span>
+            </div>
+            <p style="font-size:.875rem;color:var(--muted)">El agente crea los leads en estado <strong>Nuevo</strong>. Tu equipo avanza el estado manualmente según el seguimiento realizado.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Acciones disponibles</div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Cambiar estado</div>
+                  <div class="step-desc">Haz clic en el badge de estado en la tabla para desplegar el selector. El cambio se guarda inmediatamente, sin recargar la página.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Asignar a un agente de ventas</div>
+                  <div class="step-desc">Haz clic en el ícono de asignación de la fila. Selecciona a un miembro de tu equipo de la lista. Solo admins pueden asignar leads.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Buscar y filtrar</div>
+                  <div class="step-desc">Usa la barra de búsqueda por nombre o teléfono, y los filtros de estado para segmentar tu cartera de leads.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <div class="callout-text"><strong>Leads automáticos</strong><p>El agente captura leads cuando el usuario proporciona nombre y teléfono durante la conversación. No requiere ninguna acción manual de tu parte.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 6: CITAS -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="citas" data-title="Citas calendario agendar reagendar drag drop FullCalendar confirmada cancelada">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Citas</h2>
+            <p class="section-desc">Visualiza y gestiona todas las citas agendadas por el agente IA, con calendario interactivo y vista de lista.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Vistas disponibles</div>
+          <div class="card-body" style="display:flex;gap:1rem;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;padding:1rem;background:var(--primary-muted);border-radius:10px;text-align:center">
+              <svg width="28" height="28" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24" style="margin-bottom:.5rem"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <div style="font-weight:700;font-size:.875rem">Calendario</div>
+              <div style="font-size:.78rem;color:var(--muted)">Mes, semana o lista. Arrastra citas para reagendarlas.</div>
+            </div>
+            <div style="flex:1;min-width:200px;padding:1rem;background:#f0fdf4;border-radius:10px;text-align:center">
+              <svg width="28" height="28" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24" style="margin-bottom:.5rem"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <div style="font-weight:700;font-size:.875rem">Lista</div>
+              <div style="font-size:.78rem;color:var(--muted)">Tabla filtrable con búsqueda, estado y rango de fechas.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Gestionar una cita</div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Haz clic en la cita (lista o calendario)</div>
+                  <div class="step-desc">Se abre el modal de detalle con toda la información: nombre, teléfono, duración, notas y ubicación.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Cambiar el estado</div>
+                  <div class="step-desc">Botones rápidos: <span class="badge badge-success">Confirmar</span> <span class="badge badge-neutral">Completar</span> <span class="badge badge-danger">Cancelar</span> <span class="badge badge-warning">No asistió</span></div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Editar o reagendar</div>
+                  <div class="step-desc">Usa el botón <em>Editar</em> para cambiar fecha, hora, duración o notas. O arrastra la cita en el calendario para moverla. Aparece un botón <strong>Deshacer</strong> por 5 segundos.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <div class="callout-text"><strong>Nueva cita manual</strong><p>Usa el botón <span class="badge badge-primary">+ Nueva cita</span> para crear una cita directamente desde el dashboard, sin pasar por el agente.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 7: CAMPAÑAS -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="campanas" data-title="Campañas llamadas masivas outbound CSV contactos iniciar pausar cancelar">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Campañas</h2>
+            <p class="section-desc">Lanza llamadas o mensajes de WhatsApp masivos a tu lista de contactos de forma automatizada.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Crear una campaña</div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Haz clic en <strong>+ Nueva campaña</strong></div>
+                  <div class="step-desc">Elige nombre, agente, canal (voz o WhatsApp), guión de llamada y objetivo (seguimiento, reactivación, confirmación de citas, etc.).</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Importar contactos</div>
+                  <div class="step-desc">Dos opciones: <strong>Subir CSV</strong> (columnas: nombre, teléfono) o <strong>Importar desde Leads</strong> (filtra por estado o días sin contacto).</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Iniciar la campaña</div>
+                  <div class="step-desc">Haz clic en el menú de la tarjeta → <strong>Iniciar</strong>. Puedes pausarla o cancelarla en cualquier momento.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <table class="doc-table" style="margin-top:1rem">
+          <thead><tr><th>Estado</th><th>Descripción</th><th>Acciones disponibles</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-neutral">Borrador</span></td><td>Recién creada, sin contactos</td><td>Iniciar, Cancelar</td></tr>
+            <tr><td><span class="badge badge-primary">Activa</span></td><td>Marcando contactos ahora</td><td>Pausar, Cancelar</td></tr>
+            <tr><td><span class="badge badge-warning">Pausada</span></td><td>Detenida temporalmente</td><td>Reanudar, Cancelar</td></tr>
+            <tr><td><span class="badge badge-success">Completada</span></td><td>Todos los contactos procesados</td><td>Ver resultados</td></tr>
+            <tr><td><span class="badge badge-danger">Cancelada</span></td><td>Detenida permanentemente</td><td>Ver reporte</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout warn" style="margin-top:1rem">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <div class="callout-text"><strong>Formato del CSV</strong><p>El archivo debe tener al menos dos columnas: <code>nombre</code> y <code>telefono</code>. Los números deben incluir código de país, ej. <code>+5215512345678</code>.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 8: BASE DE CONOCIMIENTO -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="conocimiento" data-title="Base de conocimiento FAQ preguntas frecuentes URL texto libre RAG">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Base de conocimiento</h2>
+            <p class="section-desc">Alimenta a tu agente con información sobre tu negocio para que responda con precisión.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Tres formas de agregar contenido</div>
+          <div class="card-body">
+            <div class="feature-grid">
+              <div class="feature-card">
+                <div class="feature-card-icon" style="background:#eeeeff"><svg width="18" height="18" fill="none" stroke="#696cff" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+                <div class="feature-card-title">Texto libre</div>
+                <div class="feature-card-desc">Escribe o pega directamente la información: servicios, precios, horarios, políticas.</div>
+              </div>
+              <div class="feature-card">
+                <div class="feature-card-icon" style="background:#f0fdf4"><svg width="18" height="18" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                <div class="feature-card-title">FAQ</div>
+                <div class="feature-card-desc">Pares de pregunta y respuesta. Ideal para dudas frecuentes de tus clientes.</div>
+              </div>
+              <div class="feature-card">
+                <div class="feature-card-icon" style="background:#fffbeb"><svg width="18" height="18" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+                <div class="feature-card-title">URL</div>
+                <div class="feature-card-desc">Pega la URL de tu sitio web y el sistema extrae el contenido automáticamente.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+          <div class="callout-text"><strong>¿Cómo funciona por dentro?</strong><p>El contenido se convierte en vectores semánticos (RAG). Cuando el agente recibe una pregunta, busca automáticamente la información más relevante antes de responder.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 9: REPORTES -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="reportes" data-title="Reportes estadísticas gráficas métricas KPI CSV exportar">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Reportes</h2>
+            <p class="section-desc">Analiza el rendimiento de tus agentes con gráficas detalladas y métricas de conversión.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Métricas incluidas</div>
+          <div class="card-body">
+            <div class="feature-grid">
+              <div class="feature-card"><div class="feature-card-title">Conversaciones totales</div><div class="feature-card-desc">Por día, semana o mes con comparativa al período anterior.</div></div>
+              <div class="feature-card"><div class="feature-card-title">Minutos de voz</div><div class="feature-card-desc">Gráfica de barras del consumo diario de tiempo en llamadas.</div></div>
+              <div class="feature-card"><div class="feature-card-title">Leads capturados</div><div class="feature-card-desc">Distribución por estado y fuente (voz o WhatsApp).</div></div>
+              <div class="feature-card"><div class="feature-card-title">Rendimiento por agente</div><div class="feature-card-desc">Tabla comparativa de cada agente: conversaciones, latencia, tasa de éxito.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <div class="callout-text"><strong>Exportar a CSV</strong><p>Haz clic en el botón <strong>Exportar CSV</strong> en la esquina superior derecha para descargar todos los datos del período seleccionado.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 10: FACTURACIÓN -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="facturacion" data-title="Facturación planes Stripe pago factura suscripción actualizar plan">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Facturación</h2>
+            <p class="section-desc">Gestiona tu suscripción, actualiza tu plan y descarga tus facturas.</p>
+          </div>
+        </div>
+
+        <table class="doc-table">
+          <thead><tr><th>Plan</th><th>Agentes</th><th>Minutos/mes</th><th>Ideal para</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-neutral">Starter</span></td><td>1</td><td>300 min</td><td>Probar el servicio</td></tr>
+            <tr><td><span class="badge" style="background:#eff6ff;color:#1e40af">Basic</span></td><td>2</td><td>600 min</td><td>Pequeños negocios</td></tr>
+            <tr><td><span class="badge badge-primary">Pro</span></td><td>5</td><td>1,500 min</td><td>Negocios en crecimiento</td></tr>
+            <tr><td><span class="badge badge-warning">Enterprise</span></td><td>Ilimitado</td><td>Personalizado</td><td>Grandes empresas</td></tr>
+          </tbody>
+        </table>
+
+        <div class="card" style="margin-top:1rem">
+          <div class="card-header">Cambiar de plan</div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Ir a <strong>Facturación</strong> en el menú lateral</div>
+                  <div class="step-desc">Verás tu suscripción actual, el uso del mes y las tarjetas con los planes disponibles.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Haz clic en <strong>Actualizar plan</strong></div>
+                  <div class="step-desc">Se abre el checkout de Stripe (100% seguro). Ingresa tus datos de pago y confirma.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Descarga tus facturas</div>
+                  <div class="step-desc">En la sección <em>Historial de pagos</em> puedes descargar el PDF de cada factura. También puedes acceder al Portal de Facturación de Stripe para gestionar tu método de pago.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 11: USUARIOS -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="usuarios" data-title="Usuarios equipo roles admin invitar permisos">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Usuarios</h2>
+            <p class="section-desc">Administra a los miembros de tu equipo y sus niveles de acceso.</p>
+          </div>
+        </div>
+
+        <table class="doc-table">
+          <thead><tr><th>Rol</th><th>Puede hacer</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-danger">Admin</span></td>
+              <td>Todo: agentes, campañas, leads, citas, usuarios, configuración y facturación.</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-neutral">Usuario</span></td>
+              <td>Ver conversaciones, gestionar sus leads asignados y citas. No puede modificar agentes ni configuración.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card" style="margin-top:1rem">
+          <div class="card-header">Agregar un usuario</div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Ir a <strong>Usuarios</strong> → botón <strong>+ Nuevo usuario</strong></div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Completa nombre, email, contraseña y rol</div>
+                  <div class="step-desc">El usuario recibirá sus credenciales y podrá iniciar sesión de inmediato.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Activar / Desactivar usuarios</div>
+                  <div class="step-desc">Usa el toggle de la fila para bloquear el acceso sin eliminar la cuenta.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 12: CONFIGURACIÓN -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="configuracion" data-title="Configuración Twilio WhatsApp Meta perfil ajustes API token">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.414 1.414M12 2v2M12 20v2M4.93 4.93 6.34 6.34M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Configuración</h2>
+            <p class="section-desc">Conecta tus servicios externos y personaliza tu perfil.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 14 19.79 19.79 0 0 1 1.63 5.39 2 2 0 0 1 3.6 3.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.5a16 16 0 0 0 6 6l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.72 18z"/></svg>
+            Twilio (Voz)
+          </div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Obtén tus credenciales de Twilio</div>
+                  <div class="step-desc">En <a href="https://console.twilio.com" target="_blank" style="color:var(--primary)">console.twilio.com</a> → <strong>Account Info</strong> → copia el <strong>Account SID</strong> y el <strong>Auth Token</strong>.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Pégalos en Ajustes → Twilio</div>
+                  <div class="step-desc">Incluye también el número de teléfono en formato E.164 (<code>+521XXXXXXXXXX</code>).</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Configura el Webhook en Twilio</div>
+                  <div class="step-desc">En tu número de Twilio → <em>Voice</em> → <strong>A call comes in</strong> → Webhook → <code>https://tudominio.com/webhooks/twilio/voice</code></div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            WhatsApp (Meta Business)
+          </div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Crea una App en Meta for Developers</div>
+                  <div class="step-desc">Tipo <strong>Business</strong> → activa el producto <strong>WhatsApp</strong>.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Copia tus credenciales</div>
+                  <div class="step-desc"><strong>Phone Number ID</strong>, <strong>Access Token</strong> y <strong>App Secret</strong> → pégalos en Ajustes → WhatsApp.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Configura el Webhook</div>
+                  <div class="step-desc">URL: <code>https://tudominio.com/webhooks/meta</code>. Suscríbete a los eventos: <code>messages</code>.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout danger">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+          <div class="callout-text"><strong>Seguridad</strong><p>Nunca compartas tu <strong>Auth Token de Twilio</strong> ni tu <strong>Access Token de Meta</strong>. Estas credenciales dan acceso completo a tus servicios. AgentCore las almacena cifradas.</p></div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ══════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 13: NOTIFICACIONES -->
+      <!-- ══════════════════════════════════════════════════════ -->
+      <section class="section" id="notificaciones" data-title="Notificaciones badge campanita alertas llamada entrante lead cita recordatorio">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div>
+            <h2 class="section-title">Notificaciones</h2>
+            <p class="section-desc">Mantente informado en tiempo real sobre lo que pasa con tus agentes y clientes.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Tipos de notificaciones</div>
+          <div class="card-body">
+            <table class="doc-table">
+              <thead><tr><th>Tipo</th><th>Cuándo aparece</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-danger">Llamada entrante</span></td>
+                  <td>En el momento en que Twilio recibe una llamada y tu agente comienza a atenderla.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-success">Nuevo lead</span></td>
+                  <td>Cuando el agente recopila el nombre y teléfono de un usuario y lo guarda como lead.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-warning">Recordatorio de cita</span></td>
+                  <td>Automáticamente cuando hay una cita confirmada en los próximos 60 minutos.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge" style="background:#eff6ff;color:#1e40af">WhatsApp</span></td>
+                  <td>Al recibir un nuevo mensaje de WhatsApp de un cliente.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:1rem">
+          <div class="card-header">¿Cómo funcionan?</div>
+          <div class="card-body">
+            <ul class="steps">
+              <li class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Badge en la campanita</div>
+                  <div class="step-desc">El número rojo en el ícono de campana de la barra superior indica cuántas notificaciones no has leído aún.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Toast automático</div>
+                  <div class="step-desc">Si el menú de notificaciones está cerrado, aparece un aviso temporal en la esquina superior derecha con el título de la notificación. Haz clic en él para ir al detalle.</div>
+                </div>
+              </li>
+              <li class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">Marcar como leídas</div>
+                  <div class="step-desc">Al abrir el menú de notificaciones se marcan todas como leídas automáticamente después de 1.5 segundos. O usa el botón <strong>Todo leído</strong> para hacerlo de inmediato.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+          <div class="callout-text"><strong>Actualización automática</strong><p>Las notificaciones se revisan cada 15 segundos en segundo plano. No necesitas recargar la página para verlas.</p></div>
+        </div>
+      </section>
+
+      <!-- ── Footer ────────────────────────────────────────────────── -->
+      <div style="margin-top:4rem;padding:2rem;background:#fff;border-radius:var(--radius);border:1px solid var(--border);text-align:center">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#696cff,#9b5de5);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+          <svg width="24" height="24" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <h3 style="font-weight:800;margin-bottom:.5rem;color:var(--text)">AgentCore</h3>
+        <p style="color:var(--muted);font-size:.875rem;max-width:400px;margin:0 auto .5rem">Tu agente IA disponible 24/7 para atender clientes, agendar citas y capturar leads.</p>
+        <p style="color:var(--muted);font-size:.75rem">Manual v1.0 · Actualizado junio 2026</p>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /layout -->
+
+<script>
+// ── Sidebar toggle mobile ──────────────────────────────────────────
+const sidebar  = document.getElementById('sidebar');
+const overlay  = document.getElementById('sidebarOverlay');
+const hamburger= document.getElementById('hamburgerBtn');
+
+hamburger.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+});
+overlay.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('open');
+});
+
+// ── Active link on scroll (IntersectionObserver) ──────────────────
+const sections = document.querySelectorAll('.section[id]');
+const links    = document.querySelectorAll('.sidebar-link[data-section]');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.sidebar-link[data-section="${entry.target.id}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  });
+}, { rootMargin: '-64px 0px -60% 0px', threshold: 0 });
+
+sections.forEach(s => observer.observe(s));
+
+// ── Active link: handle intro separately ──────────────────────────
+const introLink = document.querySelector('.sidebar-link[href="#inicio"]');
+if (introLink) introLink.classList.add('active');
+
+// ── Smooth close sidebar on link click (mobile) ───────────────────
+links.forEach(link => {
+  link.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  });
+});
+
+// ── Progress bar ──────────────────────────────────────────────────
+const progressFill = document.getElementById('progressFill');
+function updateProgress() {
+  const main   = document.querySelector('.main');
+  const total  = document.body.scrollHeight - window.innerHeight;
+  const pct    = total > 0 ? Math.min(100, (window.scrollY / total) * 100) : 0;
+  progressFill.style.width = pct + '%';
+}
+window.addEventListener('scroll', updateProgress, { passive: true });
+updateProgress();
+
+// ── Search ────────────────────────────────────────────────────────
+const searchInput  = document.getElementById('searchInput');
+const noResultsMsg = document.getElementById('no-results-msg');
+
+searchInput.addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  let visible = 0;
+
+  sections.forEach(section => {
+    const title = (section.dataset.title || '').toLowerCase();
+    const text  = section.textContent.toLowerCase();
+    const match = !q || title.includes(q) || text.includes(q);
+    section.style.display = match ? '' : 'none';
+
+    // Also hide the preceding divider
+    const prev = section.previousElementSibling;
+    if (prev && prev.classList.contains('divider')) {
+      prev.style.display = match ? '' : 'none';
+    }
+    if (match) visible++;
+  });
+
+  noResultsMsg.style.display = (q && visible === 0) ? 'block' : 'none';
+
+  // Sync sidebar links
+  document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
+    const sec = document.getElementById(link.dataset.section);
+    link.style.opacity = (sec && sec.style.display === 'none') ? '.35' : '1';
+  });
+});
+
+// Clear search on Escape
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input'));
+    searchInput.blur();
+  }
+});
+</script>
+</body>
+</html>

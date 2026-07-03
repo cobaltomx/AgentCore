@@ -1,0 +1,17 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Bypass SSL inspection (antivirus/proxy corporativo) — sólo dev
+RUN npm config set strict-ssl false \
+ && npm config set registry http://registry.npmjs.org/
+
+# Instalar dependencias primero (cache layer)
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]

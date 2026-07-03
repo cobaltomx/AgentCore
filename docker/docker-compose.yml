@@ -1,0 +1,114 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: agentcore_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agentcore}
+      POSTGRES_USER: ${POSTGRES_USER:-agentcore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdev123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentcore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: agentcore_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    container_name: agentcore_backend
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # ── Frontend PHP (Sneat dashboard) ───────────────────────────
+  frontend:
+    image: php:8.3-cli
+    container_name: agentcore_frontend
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      API_BASE_URL: http://backend:3000/api/v1
+      APP_ENV: development
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../frontend:/app
+    depends_on:
+      - backend
+    command: php -S 0.0.0.0:8080 -t /app
+
+  # ── Easy!Appointments ─────────────────────────────────────────
+  mariadb:
+    image: mariadb:11
+    container_name: agentcore_mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${EA_DB_ROOT_PASSWORD:-rootdev123}
+      MARIADB_DATABASE:      ${EA_DB_NAME:-easyappointments}
+      MARIADB_USER:          ${EA_DB_USER:-easyapp}
+      MARIADB_PASSWORD:      ${EA_DB_PASSWORD:-easyapp123}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  easyappointments:
+    image: alextselegidis/easyappointments:latest
+    container_name: agentcore_ea
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      BASE_URL:    ${EA_BASE_URL:-http://localhost:8082}
+      DB_HOST:     mariadb
+      DB_NAME:     ${EA_DB_NAME:-easyappointments}
+      DB_USERNAME: ${EA_DB_USER:-easyapp}
+      DB_PASSWORD: ${EA_DB_PASSWORD:-easyapp123}
+      DB_PORT:     3306
+      DEBUG_MODE:  false
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  mariadb_data:

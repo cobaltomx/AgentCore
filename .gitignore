@@ -1,0 +1,22 @@
+# Secretos y entorno
+.env
+.env.*
+!.env.example
+
+# Dependencias
+node_modules/
+vendor/
+
+# Datos y uploads de usuarios
+frontend/uploads/
+backend/uploads/
+*.log
+
+# Docker volúmenes locales
+docker/data/
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

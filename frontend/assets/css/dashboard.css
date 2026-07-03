@@ -1,0 +1,499 @@
+/* ================================================================
+   AgentCore Dashboard — Overrides & Custom Components
+   Extends real Sneat (core.css + theme-default.css)
+   ================================================================ */
+
+/* ── bg-label-primary (missing from Sneat core.css) ─────────── */
+.bg-label-primary {
+  background: rgba(105, 108, 255, .16) !important;
+  color: #696cff !important;
+}
+
+/* ── Avatar uploader (modales) ───────────────────────────────── */
+.avatar-upload-wrap {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+}
+.avatar-upload-wrap .avatar-preview {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #eceef1;
+  background: #f4f5fb;
+  display: block;
+}
+.avatar-upload-wrap .avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #696cff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  transition: background .15s, transform .1s;
+  margin: 0;
+}
+.avatar-upload-wrap .avatar-edit-btn:hover { background: #5b5ef0; }
+.avatar-upload-wrap .avatar-edit-btn:active { transform: scale(.92); }
+.avatar-upload-wrap .avatar-edit-btn i { font-size: 16px; line-height: 1; }
+
+/* Avatar pequeño con imagen (tablas) */
+.avatar img { object-fit: cover; width: 100%; height: 100%; }
+
+/* ── Welcome / hero banner ───────────────────────────────────── */
+.welcome-card {
+  background: linear-gradient(135deg, #696cff 0%, #9155fd 100%);
+  border-radius: 1rem;
+  color: #fff;
+  padding: 1.5rem 2rem;
+}
+
+/* ── KPI cards hover lift ────────────────────────────────────── */
+.card-kpi { transition: transform .15s; }
+.card-kpi:hover { transform: translateY(-2px); }
+
+/* ── Auth page wrapper ───────────────────────────────────────── */
+.auth-card .card { border-radius: 1rem; }
+
+/* ── Toast animation ─────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Thin scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(105,108,255,.25); border-radius: 4px; }
+
+/* ── Conversation transcript bubbles ─────────────────────────── */
+.chat-bubble {
+  max-width: 72%;
+  padding: .625rem 1rem;
+  border-radius: 1rem;
+  font-size: .9rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.chat-bubble.agent  { background: rgba(105,108,255,.08); border-bottom-left-radius: .25rem; }
+.chat-bubble.caller { background: #696cff; color: #fff; border-bottom-right-radius: .25rem; }
+
+/* ============================================================
+   SIDEBAR — logo, grupos colapsables, modo colapsado a iconos
+   ============================================================ */
+
+/* Logo más balanceado */
+.app-brand-link { padding: .25rem 0; }
+.app-brand-logo svg,
+.app-brand-logo .brand-img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+.app-brand-text {
+  font-size: 1.2rem;
+  letter-spacing: .3px;
+  background: linear-gradient(135deg, #696cff 0%, #9155fd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Botón de colapsar / fijar sidebar ───────────────────────
+   Pin flotante posicionado absolutamente al borde derecho del
+   aside. Vive DENTRO del aside (como hijo directo, no del
+   .app-brand que tiene overflow:hidden) para que el cursor sobre
+   el pin mantenga el :hover del aside — permitiendo fijar el
+   sidebar expandido al hacer click.
+   El bug "no se colapsa al click" se evita con un pointer-events:none
+   temporal aplicado por theme.js al colapsar. */
+.layout-menu-pin {
+  position: absolute;
+  top: 18px;
+  right: -14px;            /* medio fuera del borde del aside */
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #696cff;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(105,108,255,.4);
+  z-index: 1090;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity .15s, transform .25s, background .15s;
+  opacity: 1;
+}
+.layout-menu-pin:hover { background: #5b5ef0; color: #fff; }
+.layout-menu-pin i { font-size: 16px; line-height: 1; }
+
+/* Colapsado sin hover: ocultar el pin */
+#layout-menu.menu-collapsed:not(:hover) .layout-menu-pin {
+  opacity: 0;
+  pointer-events: none;
+}
+/* Colapsado con hover: chevron a la derecha (= "fijar expandido") */
+#layout-menu.menu-collapsed:hover .layout-menu-pin {
+  transform: rotate(180deg);
+}
+
+/* Sub-items: el chevron y la animación los maneja Sneat (Menu class).
+   Aquí sólo afinamos color/peso del item activo dentro de un grupo. */
+.menu-vertical .menu-sub .menu-item.active > .menu-link {
+  color: #696cff;
+  font-weight: 600;
+}
+
+/* ── Modo colapsado ──────────────────────────────────────────
+   Sneat ya implementa el ancho/iconos/textos del sidebar colapsado
+   vía `.menu-collapsed:not(:hover)` sobre el `.menu-vertical`. Lo
+   único que Sneat no resuelve para `layout-menu-fixed` es el padding
+   del contenido y la posición de la navbar fija. */
+@media (min-width: 1200px) {
+  html.layout-menu-fixed.layout-menu-collapsed .layout-page {
+    padding-left: 5.25rem;
+    transition: padding-left .3s;
+  }
+  html.layout-menu-fixed.layout-menu-collapsed.layout-navbar-fixed .layout-content-navbar:not(.layout-without-menu) .layout-navbar {
+    left: 5.25rem;
+  }
+  /* Sombra cuando el sidebar se expande sobre el contenido en hover */
+  #layout-menu.menu-collapsed:hover {
+    box-shadow: 0 6px 22px rgba(75,70,92,.18);
+    z-index: 1080;
+  }
+}
+
+/* Items "Cuenta" custom (LI con .px-3 — badges de rol, plan, progress
+   de minutos): ocultarlos completamente cuando colapsado-sin-hover.
+   Sneat sólo oculta .menu-link normales, no contenedores como estos. */
+#layout-menu.menu-collapsed:not(:hover) .menu-inner > li.px-3 {
+  display: none;
+}
+
+/* Wordmark "AgentCore": Sneat sólo aplica opacity:0, pero el texto
+   con background-clip gradient se sigue viendo recortado. Lo ocultamos
+   por completo cuando colapsado-sin-hover. */
+#layout-menu.menu-collapsed:not(:hover) .app-brand-text {
+  display: none;
+}
+
+/* Avatares como imagen — encuadre perfecto */
+.avatar > img.rounded-circle {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Preview de avatar en modales (input file) */
+.avatar-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(105,108,255,.15);
+  background: #f4f5fb;
+  display: block;
+}
+.avatar-upload-wrap {
+  position: relative;
+  display: inline-block;
+}
+.avatar-upload-wrap .avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #696cff;
+  color: #fff;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.18);
+}
+.avatar-upload-wrap .avatar-edit-btn:hover { background: #5b5ef0; }
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+html.dark-style {
+  --ac-bg:          #1a1d29;
+  --ac-bg-elev:     #232633;
+  --ac-bg-elev-2:   #2a2d3b;
+  --ac-text:        #e7e9f1;
+  --ac-text-muted:  #9298a6;
+  --ac-border:      #353947;
+  --ac-primary:     #7a7dff;
+}
+
+html.dark-style,
+html.dark-style body {
+  background: var(--ac-bg) !important;
+  color: var(--ac-text) !important;
+}
+
+html.dark-style .bg-menu-theme,
+html.dark-style .bg-navbar-theme,
+html.dark-style .bg-footer-theme {
+  background: var(--ac-bg-elev) !important;
+  color: var(--ac-text) !important;
+}
+
+html.dark-style .card,
+html.dark-style .modal-content,
+html.dark-style .dropdown-menu {
+  background: var(--ac-bg-elev) !important;
+  color: var(--ac-text) !important;
+  border-color: var(--ac-border) !important;
+}
+
+html.dark-style .card-header,
+html.dark-style .card-footer,
+html.dark-style .modal-header,
+html.dark-style .modal-footer,
+html.dark-style hr,
+html.dark-style .dropdown-divider,
+html.dark-style .border,
+html.dark-style .border-top,
+html.dark-style .border-bottom {
+  border-color: var(--ac-border) !important;
+}
+
+html.dark-style .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--ac-text);
+  --bs-table-border-color: var(--ac-border);
+  --bs-table-striped-bg: rgba(255,255,255,.02);
+  --bs-table-hover-bg: rgba(122,125,255,.07);
+  color: var(--ac-text);
+}
+html.dark-style .table > :not(caption) > * > * { background-color: transparent; }
+html.dark-style .table-light,
+html.dark-style .table thead.table-light th,
+html.dark-style thead.table-light tr {
+  background: var(--ac-bg-elev-2) !important;
+  color: var(--ac-text) !important;
+  border-color: var(--ac-border) !important;
+}
+
+html.dark-style .form-control,
+html.dark-style .form-select,
+html.dark-style .input-group-text {
+  background: var(--ac-bg-elev-2) !important;
+  color: var(--ac-text) !important;
+  border-color: var(--ac-border) !important;
+}
+html.dark-style .form-control::placeholder { color: #6b7080 !important; }
+html.dark-style .form-control[readonly],
+html.dark-style .form-control:disabled,
+html.dark-style .form-select:disabled {
+  background: #1f2230 !important;
+  color: var(--ac-text-muted) !important;
+}
+
+html.dark-style .text-muted { color: var(--ac-text-muted) !important; }
+html.dark-style .text-body  { color: var(--ac-text) !important; }
+html.dark-style .text-dark  { color: var(--ac-text) !important; }
+html.dark-style .text-heading { color: var(--ac-text) !important; }
+
+html.dark-style .menu-vertical .menu-item .menu-link {
+  color: var(--ac-text-muted);
+}
+html.dark-style .menu-vertical .menu-item.active > .menu-link {
+  background: rgba(122,125,255,.18);
+  color: var(--ac-primary);
+}
+html.dark-style .menu-vertical .menu-sub .menu-item.active .menu-link {
+  background: rgba(122,125,255,.14);
+  color: var(--ac-primary);
+}
+html.dark-style .menu-inner-shadow {
+  background: linear-gradient(var(--ac-bg-elev), rgba(35,38,51,0));
+}
+
+html.dark-style .bg-label-primary   { background: rgba(122,125,255,.18) !important; color: #9ea1ff !important; }
+html.dark-style .bg-label-success   { background: rgba(113,221,55,.16)  !important; color: #8fe55a !important; }
+html.dark-style .bg-label-info      { background: rgba(3,195,236,.16)   !important; color: #4cd6f1 !important; }
+html.dark-style .bg-label-warning   { background: rgba(255,171,0,.16)   !important; color: #ffc046 !important; }
+html.dark-style .bg-label-danger    { background: rgba(255,62,29,.16)   !important; color: #ff6b50 !important; }
+html.dark-style .bg-label-secondary { background: rgba(255,255,255,.08) !important; color: #c6cad6 !important; }
+
+html.dark-style .btn-outline-primary   { color: var(--ac-primary); border-color: var(--ac-primary); }
+html.dark-style .btn-outline-secondary { color: #c6cad6;            border-color: #4a4f60; }
+html.dark-style .btn-secondary         { background: #3a3f51; border-color: #3a3f51; color: var(--ac-text); }
+
+html.dark-style .progress { background: rgba(255,255,255,.07); }
+
+html.dark-style .chat-bubble.agent  { background: rgba(122,125,255,.12); color: var(--ac-text); }
+html.dark-style .chat-bubble.caller { background: #5b5ef0; }
+
+html.dark-style ::-webkit-scrollbar-thumb { background: rgba(122,125,255,.35); }
+
+html.dark-style .welcome-card { color: #fff; }
+
+html.dark-style .alert-danger  { background: rgba(255,62,29,.15); color: #ff8b78; border-color: rgba(255,62,29,.3); }
+html.dark-style .alert-success { background: rgba(113,221,55,.14); color: #a4ee78; border-color: rgba(113,221,55,.3); }
+html.dark-style .alert-info    { background: rgba(3,195,236,.14); color: #66dcf2; border-color: rgba(3,195,236,.3); }
+html.dark-style .alert-warning { background: rgba(255,171,0,.14); color: #ffce64; border-color: rgba(255,171,0,.3); }
+
+html.dark-style .layout-navbar { box-shadow: 0 1px 0 var(--ac-border); }
+html.dark-style code,
+html.dark-style pre { color: #d6cee0; background: #1e2130; }
+
+/* ============================================================
+   FULLCALENDAR — DARK MODE
+   ============================================================ */
+html.dark-style .fc-theme-standard .fc-scrollgrid,
+html.dark-style .fc-theme-standard td,
+html.dark-style .fc-theme-standard th {
+  border-color: var(--ac-border) !important;
+}
+html.dark-style .fc .fc-col-header-cell {
+  background: var(--ac-bg-elev-2) !important;
+}
+html.dark-style .fc .fc-col-header-cell-cushion,
+html.dark-style .fc .fc-daygrid-day-number,
+html.dark-style .fc .fc-list-event-title,
+html.dark-style .fc .fc-list-day-text,
+html.dark-style .fc .fc-list-day-side-text {
+  color: var(--ac-text-muted) !important;
+  text-decoration: none;
+}
+html.dark-style .fc .fc-toolbar-title {
+  color: var(--ac-text) !important;
+}
+html.dark-style .fc .fc-daygrid-day {
+  background: var(--ac-bg-elev) !important;
+}
+html.dark-style .fc .fc-day-today {
+  background: rgba(122,125,255,.09) !important;
+}
+html.dark-style .fc .fc-timegrid-slot,
+html.dark-style .fc .fc-timegrid-axis {
+  background: var(--ac-bg-elev) !important;
+}
+html.dark-style .fc .fc-timegrid-slot-label-cushion,
+html.dark-style .fc .fc-timegrid-now-indicator-line {
+  color: var(--ac-text-muted);
+}
+html.dark-style .fc .fc-list-empty {
+  background: var(--ac-bg-elev) !important;
+  color: var(--ac-text-muted);
+}
+html.dark-style .fc .fc-list-table .fc-list-day th {
+  background: var(--ac-bg-elev-2) !important;
+}
+html.dark-style .fc .fc-list-event:hover td {
+  background: rgba(122,125,255,.07) !important;
+}
+html.dark-style .fc .fc-list-event td {
+  border-color: var(--ac-border) !important;
+}
+/* Botones del toolbar de FullCalendar */
+html.dark-style .fc .fc-button-primary {
+  background-color: #696cff !important;
+  border-color: #696cff !important;
+}
+html.dark-style .fc .fc-button-primary:not(:disabled):not(.fc-button-active):hover {
+  background-color: #5b5ef0 !important;
+  border-color: #5b5ef0 !important;
+}
+html.dark-style .fc .fc-button-primary.fc-button-active {
+  background-color: #5b5ef0 !important;
+  border-color: #5b5ef0 !important;
+}
+
+/* ── Appointments: filtros + vista ──────────────────────── */
+.appt-filter-bar .form-control,
+.appt-filter-bar .form-select {
+  font-size: .8125rem;
+}
+.appt-filter-bar .input-group-text {
+  font-size: .8125rem;
+  background: transparent;
+}
+.appt-dragging-hint {
+  font-size: .78rem;
+  color: #8592a3;
+}
+
+/* ── Help tip (?) ────────────────────────────────────────────
+   Uso: <span class="help-tip" data-bs-toggle="popover"
+              data-bs-content="Explicación aquí">?</span>
+   ─────────────────────────────────────────────────────────── */
+.help-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #e0e1ff;
+  color: #696cff;
+  font-size: .6rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-left: .3rem;
+  position: relative;
+  top: -1px;
+  transition: background .15s, color .15s;
+  user-select: none;
+  flex-shrink: 0;
+}
+.help-tip:hover {
+  background: #696cff;
+  color: #fff;
+}
+html.dark-style .help-tip {
+  background: #3b3e6e;
+  color: #a5a8ff;
+}
+html.dark-style .help-tip:hover {
+  background: #696cff;
+  color: #fff;
+}
+
+/* Popover del help-tip */
+.help-tip-popover .popover-body {
+  font-size: .8rem;
+  line-height: 1.5;
+  max-width: 260px;
+  color: #566a7f;
+}
+html.dark-style .help-tip-popover .popover-body {
+  color: #a1acbe;
+  background: #2b2c40;
+}
+html.dark-style .help-tip-popover.bs-popover-auto[data-popper-placement^=bottom] .popover-arrow::after,
+html.dark-style .help-tip-popover .popover-arrow::after {
+  border-bottom-color: #2b2c40;
+}
+html.dark-style .help-tip-popover {
+  background: #2b2c40;
+  border-color: #3b3e5e;
+}
+html.dark-style .help-tip-popover .popover-header {
+  background: #32334d;
+  border-color: #3b3e5e;
+  color: #d0d3e8;
+}
