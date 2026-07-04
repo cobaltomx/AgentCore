@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict v9T3GpChiuhC0WdoJ8A0y0ATA8ZD8jPxpgeFP0BygT7u1O4FGlGtlSQ8fy59tjG
+\restrict kfP73bQa6f3avcKlCA98krvdkvEGjjRPtrQ71MK2HUheyOBJrjReHZspQIBnpSD
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg12+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg12+1)
@@ -1021,7 +1021,8 @@ CREATE TABLE public.users (
     last_login_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    avatar_url text
+    avatar_url text,
+    terms_accepted_at timestamp with time zone
 );
 
 
@@ -2689,5 +2690,5 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict v9T3GpChiuhC0WdoJ8A0y0ATA8ZD8jPxpgeFP0BygT7u1O4FGlGtlSQ8fy59tjG
+\unrestrict kfP73bQa6f3avcKlCA98krvdkvEGjjRPtrQ71MK2HUheyOBJrjReHZspQIBnpSD
 

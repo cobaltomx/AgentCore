@@ -26,6 +26,7 @@ async function authRoutes(app) {
 
     const result = await app.db.query(
       `SELECT u.id, u.tenant_id, u.email, u.name, u.role, u.password_hash, u.is_active, u.avatar_url,
+              u.terms_accepted_at,
               t.slug as tenant_slug, t.name as tenant_name, t.plan, t.status as tenant_status,
               t.max_agents, t.max_minutes_mo, t.minutes_used_mo, t.settings as tenant_settings,
               t.avatar_url as tenant_avatar_url, t.is_ready, t.setup_steps
@@ -73,11 +74,12 @@ async function authRoutes(app) {
     return reply.code(200).send({
       token,
       user: {
-        id:         user.id,
-        email:      user.email,
-        name:       user.name,
-        role:       user.role,
-        avatar_url: user.avatar_url,
+        id:              user.id,
+        email:           user.email,
+        name:            user.name,
+        role:            user.role,
+        avatar_url:      user.avatar_url,
+        terms_accepted:  !!user.terms_accepted_at,
         tenant: {
           id:              user.tenant_id,
           slug:            user.tenant_slug,
@@ -253,6 +255,16 @@ async function authRoutes(app) {
         settings:        row.tenant_settings ?? {},
       },
     };
+  });
+
+  // POST /api/v1/auth/accept-terms — registra la aceptación de Términos de
+  // Servicio y Privacidad (modal bloqueante en el primer login).
+  app.post('/accept-terms', { onRequest: [app.authenticate] }, async (request, reply) => {
+    await app.db.query(
+      `UPDATE users SET terms_accepted_at = NOW() WHERE id = $1 AND terms_accepted_at IS NULL`,
+      [request.user.user_id]
+    );
+    return reply.code(200).send({ ok: true });
   });
 }
 

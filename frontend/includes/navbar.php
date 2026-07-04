@@ -222,5 +222,60 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
+<?php if (empty($_SESSION['terms_accepted'])): ?>
+<!-- ── Aceptación de Términos/Privacidad — modal bloqueante (primer login) ── -->
+<div id="termsGateOverlay" role="dialog" aria-modal="true" aria-labelledby="termsGateTitle"
+     style="position:fixed;inset:0;z-index:10000;background:rgba(15,17,22,.72);
+            display:flex;align-items:center;justify-content:center;padding:1rem;">
+  <div class="card" style="max-width:520px;width:100%;border-radius:.75rem;">
+    <div class="card-body p-4">
+      <h5 id="termsGateTitle" class="mb-2"><i class="bx bx-shield-quarter me-1 text-primary"></i>Antes de continuar</h5>
+      <p class="text-muted mb-3" style="font-size:.92rem">
+        Para usar AgentCore necesitamos que revises y aceptes nuestros
+        <a href="/legal-terms.php" target="_blank" rel="noopener">Términos de Servicio</a>
+        y nuestra <a href="/legal-privacy.php" target="_blank" rel="noopener">Política de Privacidad</a>.
+      </p>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="termsGateCheck">
+        <label class="form-check-label" for="termsGateCheck" style="font-size:.92rem">
+          He leído y acepto los Términos de Servicio y la Política de Privacidad.
+        </label>
+      </div>
+      <div id="termsGateError" class="text-danger small mb-2 d-none">No se pudo registrar tu aceptación. Intenta de nuevo.</div>
+      <button type="button" class="btn btn-primary w-100" id="termsGateBtn" disabled>
+        <span id="termsGateBtnText">Continuar</span>
+        <span id="termsGateSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var overlay  = document.getElementById('termsGateOverlay');
+  var check    = document.getElementById('termsGateCheck');
+  var btn      = document.getElementById('termsGateBtn');
+  var btnText  = document.getElementById('termsGateBtnText');
+  var spinner  = document.getElementById('termsGateSpinner');
+  var errorEl  = document.getElementById('termsGateError');
+
+  check.addEventListener('change', function () { btn.disabled = !check.checked; });
+
+  btn.addEventListener('click', async function () {
+    if (!check.checked) return;
+    btn.disabled = true; spinner.classList.remove('d-none'); btnText.textContent = 'Guardando…';
+    errorEl.classList.add('d-none');
+    try {
+      const r = await fetch('/api/accept-terms.php', { method: 'POST' });
+      const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error('fail');
+      overlay.remove();
+    } catch (e) {
+      errorEl.classList.remove('d-none');
+      btn.disabled = false; spinner.classList.add('d-none'); btnText.textContent = 'Continuar';
+    }
+  });
+})();
+</script>
+<?php endif; ?>
 <?php
 }

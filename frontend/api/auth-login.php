@@ -48,6 +48,8 @@ if ($status !== 200 || empty($data['token'])) {
 $_SESSION['jwt_token'] = $data['token'];
 $_SESSION['user']      = $data['user'];
 $_SESSION['tenant']    = $data['user']['tenant'];
+// Aceptación de Términos/Privacidad (modal bloqueante si aún no aceptó)
+$_SESSION['terms_accepted'] = !empty($data['user']['terms_accepted']);
 
 // Determinar si el tenant necesita onboarding
 $tenant   = $data['user']['tenant'];
