@@ -6,6 +6,7 @@ function renderFooter(): void {
       <div class="mb-2 mb-md-0">
         <a href="#" class="footer-link fw-bolder">AgentCore</a> ©<script>document.write(new Date().getFullYear())</script>
         · <a href="/legal-terms.php" target="_blank" rel="noopener" class="footer-link">Términos de Servicio</a>
+        · <a href="/legal-privacy.php" target="_blank" rel="noopener" class="footer-link">Privacidad</a>
       </div>
       <div class="d-none d-lg-inline-block">
         <span class="text-muted small">v<?= APP_VERSION ?></span>

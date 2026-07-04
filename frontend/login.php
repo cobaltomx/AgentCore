@@ -232,6 +232,7 @@ $forbidden  = isset($_GET['forbidden']);
     <p class="text-center text-muted mt-4 mb-0" style="font-size:.78rem">
       AgentCore &copy; <?= date('Y') ?> · v<?= APP_VERSION ?>
       · <a href="/legal-terms.php" class="text-muted">Términos de Servicio</a>
+      · <a href="/legal-privacy.php" class="text-muted">Privacidad</a>
     </p>
   </div>
 </div>
