@@ -3,6 +3,14 @@
 > **Fecha:** 3 jul 2026 · **Enfoque:** que el sistema sea sólido, intuitivo y altamente rentable.
 > Complementa `docs/AUDITORIA-PRODUCCION.md` (infraestructura/resiliencia, ya resuelta).
 > **Los hallazgos críticos de seguridad de esta ronda ya fueron corregidos** (commit `b3add31`).
+>
+> ## ✅ ESTADO: todos los hallazgos accionables RESUELTOS (3 jul 2026)
+> - Seguridad: S1/S2/S3 (fuga cross-tenant), S4 (rate limit), **S8 (email real de reset)** ✅
+> - Rentabilidad: **R1** (watchdog de minutos), **R2** (ROI vs. costo del plan), **R3** (trials),
+>   **R4** (alerta de margen negativo), **R5** (churn/inactividad), **R7** (upsell proactivo) ✅
+> - Usabilidad: **U2** (help-tips) ✅
+> - Quedan solo cosméticos menores (S5 código de estado 500→404, S6 self-XSS del admin) y
+>   S7 (CSRF token, mitigado por SameSite) — bajo impacto, opcionales.
 
 ---
 
