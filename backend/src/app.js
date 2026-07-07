@@ -73,8 +73,17 @@ async function start() {
     closeZombies();
     const zombieTimer = setInterval(closeZombies, 60 * 60 * 1000);
 
+    // Monitor de periodos de prueba: recordatorio ~3 días antes del fin del
+    // trial (conversión) + red de seguridad para suspender trials vencidos.
+    // Diario (primer chequeo a los 90s para no frenar el boot).
+    const { checkTrials } = require('./services/billing/trial-monitor');
+    const trialTick = () => checkTrials(app.db, app.redis).catch(e => console.warn('[TrialMonitor] falló:', e.message));
+    const trialFirst = setTimeout(trialTick, 90 * 1000);
+    const trialTimer = setInterval(trialTick, 24 * 60 * 60 * 1000);
+    console.log('[TrialMonitor] Iniciado — tick diario');
+
     // Detener workers al apagar
-    const stopAll = () => { worker.stop(); clearInterval(reminderTimer); clearTimeout(balanceFirst); clearInterval(balanceTimer); clearInterval(zombieTimer); process.exit(0); };
+    const stopAll = () => { worker.stop(); clearInterval(reminderTimer); clearTimeout(balanceFirst); clearInterval(balanceTimer); clearInterval(zombieTimer); clearTimeout(trialFirst); clearInterval(trialTimer); process.exit(0); };
     process.on('SIGTERM', stopAll);
     process.on('SIGINT',  stopAll);
   } catch (err) {
