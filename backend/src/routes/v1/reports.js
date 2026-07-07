@@ -175,6 +175,16 @@ async function reportsRoutes(app) {
     const noShowRecovery = a.cancelled_early_cur * avgTicket;
     const valueTotal     = valueAppts + valueLeads + valueTimeSaved + noShowRecovery;
 
+    // ── ROI vs. lo que paga el tenant (reduce churn: "¿por qué pago esto?") ──
+    // El múltiplo se normaliza a 30 días para comparar manzanas con manzanas.
+    let planMonthly = 0, roiMultiple = null;
+    try {
+      const pr = await app.db.query('SELECT monthly_cents FROM plans WHERE key = $1', [req.tenant.plan]);
+      planMonthly = Math.round((pr.rows[0]?.monthly_cents || 0) / 100);
+      const valueNormalized = valueTotal * (30 / days);   // valor mensualizado
+      if (planMonthly > 0) roiMultiple = +(valueNormalized / planMonthly).toFixed(1);
+    } catch { /* sin plan → sin ROI, no romper el reporte */ }
+
     // Helper: variación % vs período anterior
     const pct = (cur, prev) => prev > 0 ? Math.round((cur - prev) / prev * 100)
                                         : (cur > 0 ? 100 : 0);
@@ -183,6 +193,8 @@ async function reportsRoutes(app) {
       period_days: days,
       currency,
       config: { avgTicket, valPerLead, staffHourlyCost: staffCost },
+      plan_monthly: planMonthly,   // lo que paga el tenant al mes
+      roi_multiple: roiMultiple,   // cuántas veces recupera lo que paga (mensualizado)
 
       metrics: {
         convs:         { value: c.convs_cur,        change: pct(c.convs_cur, c.convs_prev) },

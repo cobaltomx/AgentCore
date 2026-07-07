@@ -214,13 +214,20 @@ renderHead('Dashboard');
       </div>
     </div>
     <div class="col-lg-5">
-      <?php if ($valueReport): $vTotal=(float)($valueReport['value']['total']??0); $vCurr=$valueReport['currency']??'MXN'; $vMet=$valueReport['metrics']??[]; ?>
+      <?php if ($valueReport): $vTotal=(float)($valueReport['value']['total']??0); $vCurr=$valueReport['currency']??'MXN'; $vMet=$valueReport['metrics']??[];
+        $vRoi=$valueReport['roi_multiple']??null; $vPlan=(float)($valueReport['plan_monthly']??0); ?>
       <a href="/pages/value-report.php" class="text-decoration-none">
       <div class="card h-100 bg-label-primary border-0">
         <div class="card-body d-flex flex-column justify-content-center">
           <div class="text-primary small"><i class="bx bx-coin me-1"></i>Valor generado este mes</div>
           <div class="h2 mb-1 fw-bold text-primary">$<?= number_format($vTotal,0) ?> <?= e($vCurr) ?></div>
           <div class="small text-primary"><?= (int)($vMet['appointments']['value']??0) ?> citas · <?= (int)($vMet['leads']['value']??0) ?> leads · <?= (int)($vMet['after_hours']['value']??0) ?> fuera de horario</div>
+          <?php if ($vRoi !== null && $vRoi > 0 && $vPlan > 0): ?>
+          <div class="mt-2 pt-2 border-top border-primary border-opacity-25">
+            <span class="badge bg-primary"><i class="bx bx-trending-up me-1"></i>ROI <?= rtrim(rtrim(number_format($vRoi,1),'0'),'.') ?>×</span>
+            <span class="small text-primary ms-1">recuperas <?= rtrim(rtrim(number_format($vRoi,1),'0'),'.') ?> veces los $<?= number_format($vPlan,0) ?> de tu plan</span>
+          </div>
+          <?php endif; ?>
           <div class="mt-2"><span class="btn btn-sm btn-primary">Ver reporte <i class="bx bx-chevron-right"></i></span></div>
         </div>
       </div>
