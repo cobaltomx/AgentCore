@@ -314,7 +314,7 @@ $webhookUrl = rtrim(BACKEND_ROOT, '/') . '/webhooks/twilio/voice';
                          placeholder="Ej: Clínica Dental Rodríguez">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Tono de voz</label>
+                  <label class="form-label d-flex align-items-center gap-1">Tono de voz <span class="help-tip" data-bs-toggle="popover" data-bs-title="Tono de voz" data-bs-content="Define la personalidad con la que responde el agente: profesional, cálido, formal o casual. Afecta cómo saluda y conversa con tus clientes.">?</span></label>
                   <select class="form-select" id="f-tone">
                     <?php foreach (['professional'=>'Profesional y amable','friendly'=>'Cálido y cercano','formal'=>'Formal y cortés','casual'=>'Relajado y amigable'] as $val=>$label): ?>
                       <option value="<?= $val ?>" <?= ($cfg['tone']??'professional')===$val?'selected':'' ?>><?= $label ?></option>
@@ -332,7 +332,7 @@ $webhookUrl = rtrim(BACKEND_ROOT, '/') . '/webhooks/twilio/voice';
                   <small class="text-muted">Define dónde atiende. Mira su alcance en la pestaña <strong>Canal</strong>.</small>
                 </div>
                 <div class="col-12">
-                  <label class="form-label">Objetivo del agente</label>
+                  <label class="form-label d-flex align-items-center gap-1">Objetivo del agente <span class="help-tip" data-bs-toggle="popover" data-bs-title="Objetivo del agente" data-bs-content="La meta principal que persigue el agente en cada conversación (ej. agendar citas, calificar prospectos, tomar pedidos). Guía sus respuestas y hacia dónde lleva la charla.">?</span></label>
                   <input type="text" class="form-control" id="f-objective"
                          value="<?= e($cfg['objective']??'') ?>"
                          placeholder="Ej: Agendar citas odontológicas y resolver dudas sobre servicios y precios">

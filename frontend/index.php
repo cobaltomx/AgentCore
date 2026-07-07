@@ -177,6 +177,32 @@ renderHead('Dashboard');
   </div>
   <?php endif; ?>
 
+  <!-- ── Upsell proactivo: cerca del límite de minutos ───────────── -->
+  <?php
+    $minsPctHome = $minutesMax > 0 ? min(100, round($minutesUsed / $minutesMax * 100)) : 0;
+    if (isAdmin() && $minsPctHome >= 75):
+      $upLevel = $minsPctHome >= 90 ? 'danger' : 'warning';
+  ?>
+  <div class="card border-<?= $upLevel ?> mb-4">
+    <div class="card-body d-flex align-items-center gap-3 flex-wrap py-3">
+      <i class="bx bx-crown text-<?= $upLevel ?>" style="font-size:1.6rem"></i>
+      <div class="flex-grow-1" style="min-width:220px">
+        <div class="fw-semibold">
+          <?php if ($minsPctHome >= 90): ?>
+            Estás por agotar tus minutos de este mes (<?= $minsPctHome ?>%)
+          <?php else: ?>
+            Llevas <?= $minsPctHome ?>% de tus minutos del mes
+          <?php endif; ?>
+        </div>
+        <small class="text-muted"><?= number_format($minutesUsed) ?> de <?= number_format($minutesMax) ?> min usados. Amplía tu plan para que tu asistente no deje de atender llamadas.</small>
+      </div>
+      <a href="/pages/billing.php" class="btn btn-<?= $upLevel === 'danger' ? 'danger' : 'outline-warning' ?>">
+        <i class="bx bx-crown me-1"></i>Ampliar plan
+      </a>
+    </div>
+  </div>
+  <?php endif; ?>
+
   <!-- ── Banda vertical (industria-específica) ───────────────────── -->
   <?php renderDashboardVertical($dash['vertical'] ?? null); ?>
 

@@ -105,6 +105,10 @@ renderHead("Reportes — últimos {$days} días");
                 <a href="/pages/billing.php" class="btn btn-sm btn-danger">
                   <i class="bx bx-crown me-1"></i>Ampliar plan
                 </a>
+              <?php elseif ($minsPct >= 75): ?>
+                <a href="/pages/billing.php" class="btn btn-sm btn-outline-warning">
+                  <i class="bx bx-crown me-1"></i>Ampliar plan
+                </a>
               <?php endif; ?>
             </div>
           </div>

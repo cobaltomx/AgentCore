@@ -126,7 +126,7 @@ renderHead('Configuración');
                      placeholder="Ciudad de México"/>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Moneda</label>
+              <label class="form-label d-flex align-items-center gap-1">Moneda <span class="help-tip" data-bs-toggle="popover" data-bs-title="Moneda del negocio" data-bs-content="En esta moneda el asistente dirá los precios en las llamadas (ej. pesos o dólares). Cámbiala si operas en otra moneda.">?</span></label>
               <?php $curr = $bizProfile['currency'] ?? 'MXN'; ?>
               <select class="form-select" id="biz-currency">
                 <?php foreach (['MXN'=>'Pesos mexicanos (MXN)','USD'=>'Dólares (USD)','EUR'=>'Euros (EUR)'] as $cv=>$cl): ?>
@@ -201,7 +201,7 @@ renderHead('Configuración');
               <small class="text-muted">Escribe y pulsa buscar para centrar el mapa; luego ajusta el pin.</small>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Radio de entrega (km)</label>
+              <label class="form-label d-flex align-items-center gap-1">Radio de entrega (km) <span class="help-tip" data-bs-toggle="popover" data-bs-title="Radio de entrega" data-bs-content="Distancia máxima desde tu sucursal a la que haces entregas. El asistente valida la dirección del cliente contra este radio antes de aceptar un pedido a domicilio.">?</span></label>
               <input type="number" min="0" step="0.5" class="form-control" id="del-radius"
                      value="<?= e($delivery['radiusKm'] ?? '') ?>" placeholder="10"/>
             </div>
@@ -505,7 +505,7 @@ renderHead('Configuración');
               <div class="mt-1"><?= planBadge($tenantInfo['plan'] ?? '') ?></div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Zona horaria</label>
+              <label class="form-label d-flex align-items-center gap-1">Zona horaria <span class="help-tip" data-bs-toggle="popover" data-bs-title="Zona horaria" data-bs-content="Todas las citas y horarios se muestran y agendan en esta zona horaria. Debe coincidir con la de tu negocio.">?</span></label>
               <select class="form-select" id="timezone">
                 <?php
                 $tzs = ['America/Mexico_City'=>'Ciudad de México (CST/CDT)',
@@ -533,7 +533,7 @@ renderHead('Configuración');
           </p>
           <div class="row g-2 align-items-end">
             <div class="col-md-8">
-              <label class="form-label">URL base pública</label>
+              <label class="form-label d-flex align-items-center gap-1">URL base pública <span class="help-tip" data-bs-toggle="popover" data-bs-title="URL base pública" data-bs-content="El dominio con el que se arman los enlaces que ve el cliente (fichas, imágenes, links de WhatsApp). Déjalo vacío si usas el dominio por defecto de la plataforma.">?</span></label>
               <input class="form-control" id="public-domain"
                      placeholder="https://propiedades.miinmobiliaria.com"
                      value="<?= e($settings['publicDomain'] ?? '') ?>"/>
@@ -560,12 +560,12 @@ renderHead('Configuración');
           <?php $sched = $settings['scheduling'] ?? []; ?>
           <div class="row g-3">
             <div class="col-md-3">
-              <label class="form-label">Hora inicio</label>
+              <label class="form-label d-flex align-items-center gap-1">Hora inicio <span class="help-tip" data-bs-toggle="popover" data-bs-title="Hora de inicio" data-bs-content="A partir de esta hora el asistente puede agendar citas. Fuera de este rango, ofrece horarios del día siguiente.">?</span></label>
               <input type="number" class="form-control" id="startHour" min="0" max="23"
                      value="<?= (int)($sched['startHour'] ?? 9) ?>"/>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Hora fin</label>
+              <label class="form-label d-flex align-items-center gap-1">Hora fin <span class="help-tip" data-bs-toggle="popover" data-bs-title="Hora de cierre" data-bs-content="Hora hasta la que el asistente agenda citas. No ofrecerá horarios después de esta hora.">?</span></label>
               <input type="number" class="form-control" id="endHour" min="1" max="24"
                      value="<?= (int)($sched['endHour'] ?? 18) ?>"/>
             </div>
