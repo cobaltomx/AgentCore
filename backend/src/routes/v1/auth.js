@@ -169,17 +169,31 @@ async function authRoutes(app) {
     const ttlSec = 3600; // 1 hora
     await app.redis.setex(`pwreset:${token}`, ttlSec, user.id);
 
-    const appUrl = process.env.APP_URL || 'http://localhost:8080';
+    const appUrl = process.env.PUBLIC_URL || process.env.APP_URL || 'http://localhost:8080';
     const resetLink = `${appUrl}/reset-password.php?token=${token}`;
 
-    // En producción aquí iría el envío de email
-    // Por ahora retornamos el link en dev mode
+    // Envío real por email (si hay proveedor configurado). Degrada con
+    // elegancia: en dev sin proveedor, devolvemos el link en la respuesta.
+    const { sendEmail, isConfigured, wrapHtml } = require('../../services/email');
+    const html = wrapHtml(
+      'Restablece tu contraseña',
+      `Hola${user.name ? ' ' + user.name : ''}, recibimos una solicitud para restablecer tu contraseña de AgentCore. El enlace expira en 1 hora. Si no fuiste tú, ignora este correo.`,
+      'Restablecer contraseña', resetLink);
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: 'Restablece tu contraseña — AgentCore',
+      html,
+      text: `Restablece tu contraseña de AgentCore (expira en 1 hora): ${resetLink}`,
+    });
+
     const isDev = (process.env.NODE_ENV || 'development') !== 'production';
     return {
       ok: true,
-      message: 'Enlace generado. En producción se enviaría al correo.',
-      // Solo exponer el link en desarrollo
-      ...(isDev && { reset_link: resetLink, expires_in: '1 hora' }),
+      message: emailResult.sent
+        ? 'Si el correo existe, recibirás un enlace para restablecer tu contraseña.'
+        : 'Enlace generado.',
+      // Solo exponer el link en dev cuando NO se envió por correo (sin proveedor).
+      ...((isDev && !emailResult.sent) && { reset_link: resetLink, expires_in: '1 hora' }),
     };
   });
 
