@@ -82,8 +82,25 @@ async function start() {
     const trialTimer = setInterval(trialTick, 24 * 60 * 60 * 1000);
     console.log('[TrialMonitor] Iniciado — tick diario');
 
+    // Monitores de rentabilidad para el superadmin: margen negativo por tenant
+    // y riesgo de churn (inactividad). Diarios, primer tick escalonado.
+    const { checkMargins } = require('./services/billing/margin-monitor');
+    const { checkInactivity } = require('./services/churn-monitor');
+    const marginTick = () => checkMargins(app.db, app.redis).catch(e => console.warn('[MarginMonitor] falló:', e.message));
+    const churnTick  = () => checkInactivity(app.db, app.redis).catch(e => console.warn('[ChurnMonitor] falló:', e.message));
+    const marginFirst = setTimeout(marginTick, 120 * 1000);
+    const churnFirst  = setTimeout(churnTick, 150 * 1000);
+    const marginTimer = setInterval(marginTick, 24 * 60 * 60 * 1000);
+    const churnTimer  = setInterval(churnTick, 24 * 60 * 60 * 1000);
+    console.log('[MarginMonitor + ChurnMonitor] Iniciados — tick diario');
+
     // Detener workers al apagar
-    const stopAll = () => { worker.stop(); clearInterval(reminderTimer); clearTimeout(balanceFirst); clearInterval(balanceTimer); clearInterval(zombieTimer); clearTimeout(trialFirst); clearInterval(trialTimer); process.exit(0); };
+    const stopAll = () => {
+      worker.stop();
+      [reminderTimer, balanceTimer, zombieTimer, trialTimer, marginTimer, churnTimer].forEach(clearInterval);
+      [balanceFirst, trialFirst, marginFirst, churnFirst].forEach(clearTimeout);
+      process.exit(0);
+    };
     process.on('SIGTERM', stopAll);
     process.on('SIGINT',  stopAll);
   } catch (err) {
