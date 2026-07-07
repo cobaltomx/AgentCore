@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-agentcore}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdev123}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../scripts/init.sql:/docker-entrypoint-initdb.d/init.sql

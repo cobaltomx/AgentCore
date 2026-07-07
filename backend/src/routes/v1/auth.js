@@ -146,8 +146,11 @@ async function authRoutes(app) {
     return result.rows[0];
   });
 
-  // POST /api/v1/auth/forgot-password
-  app.post('/forgot-password', async (request, reply) => {
+  // POST /api/v1/auth/forgot-password — rate limit: 5 intentos / 15 min por IP
+  // (evita enumeración de emails y, cuando se active el envío real, spam masivo)
+  app.post('/forgot-password', {
+    config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+  }, async (request, reply) => {
     const { email } = request.body || {};
     if (!email) return reply.code(400).send({ error: 'Email requerido' });
 
@@ -180,8 +183,10 @@ async function authRoutes(app) {
     };
   });
 
-  // POST /api/v1/auth/reset-password
-  app.post('/reset-password', async (request, reply) => {
+  // POST /api/v1/auth/reset-password — rate limit: 10 intentos / 15 min por IP
+  app.post('/reset-password', {
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+  }, async (request, reply) => {
     const { token, password } = request.body || {};
     if (!token || !password) return reply.code(400).send({ error: 'Token y contraseña requeridos' });
     if (password.length < 8) return reply.code(400).send({ error: 'La contraseña debe tener al menos 8 caracteres' });

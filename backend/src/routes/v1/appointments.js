@@ -173,7 +173,10 @@ async function appointmentsRoutes(app) {
       );
     }
 
-    const result = await app.db.query('SELECT * FROM appointments WHERE id = $1', [req.params.id]);
+    const result = await app.db.query(
+      'SELECT * FROM appointments WHERE id = $1 AND tenant_id = $2',
+      [req.params.id, req.tenant.id]
+    );
     const appt = result.rows[0];
 
     // Política de no-show: mantener el contador del cliente al día. Recalcular

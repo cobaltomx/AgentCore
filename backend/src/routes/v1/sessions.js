@@ -119,7 +119,7 @@ async function sessionsRoutes(app) {
 
     // Timestamps automáticos según estado
     if (d.status === 'confirmed' && !d.professional_confirmed_at) {
-      const s = await app.db.query('SELECT status FROM sessions WHERE id=$1', [req.params.id]);
+      const s = await app.db.query('SELECT status FROM sessions WHERE id=$1 AND tenant_id=$2', [req.params.id, req.tenant.id]);
       if (s.rows[0]?.status === 'pending_professional') {
         fields.push(`professional_confirmed_at=$${idx++}`); vals.push(new Date().toISOString());
         // Al cambiar a pending_patient, marcar profesional confirmado

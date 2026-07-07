@@ -90,7 +90,10 @@ async function knowledgeBaseRoutes(app) {
       });
     }
 
-    const updated = await app.db.query('SELECT * FROM kb_documents WHERE id = $1', [req.params.id]);
+    const updated = await app.db.query(
+      'SELECT * FROM kb_documents WHERE id = $1 AND tenant_id = $2',
+      [req.params.id, req.tenant.id]
+    );
     return updated.rows[0];
   });
 
