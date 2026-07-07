@@ -120,6 +120,9 @@ async function mediaStreamRoutes(app) {
     let dgKeepAlive = null;     // intervalo KeepAlive de Deepgram
     let dgReconnects = 0;       // reconexiones de Deepgram en esta llamada
     let llmFailCount = 0;       // circuit breaker: fallos LLM consecutivos
+    let tenantId    = null;     // para el watchdog de límite de minutos
+    let callStartedAt = 0;      // inicio de la llamada (ms) — cálculo de minutos
+    let limitTimer  = null;     // intervalo del watchdog de minutos
 
     let speakChain      = Promise.resolve();   // serializa los speaks
     let currentAudioEnd = null;                // resuelve el sendAudio en curso (barge-in)
@@ -360,9 +363,42 @@ async function mediaStreamRoutes(app) {
       });
     }
 
+    // ── Watchdog de límite de minutos (protección de margen) ────
+    // El gate de twilio.js solo revisa AL INICIO; sin esto, una llamada larga
+    // puede rebasar el plan porque el consumo se registra recién al cerrar.
+    // Como `minutes_used_mo` refleja el uso ANTES de esta llamada, proyectamos
+    // uso_previo + minutos_en_curso y cortamos con cortesía al rebasar.
+    // Además, un tope duro por llamada (VOICE_MAX_CALL_MIN, default 20) evita
+    // llamadas runaway aunque el tenant tenga crédito de sobra.
+    const HARD_CAP_MIN = parseInt(process.env.VOICE_MAX_CALL_MIN) || 20;
+    async function checkMinuteLimit() {
+      if (closed || !tenantId || !callStartedAt) return;
+      const elapsedMin = (Date.now() - callStartedAt) / 60000;
+      try {
+        const cap = elapsedMin >= HARD_CAP_MIN;
+        let overPlan = false;
+        if (!cap) {
+          const r = await app.db.query(
+            'SELECT minutes_used_mo, max_minutes_mo FROM tenants WHERE id = $1', [tenantId]);
+          const row = r.rows[0];
+          if (row && row.max_minutes_mo > 0) {
+            overPlan = (Number(row.minutes_used_mo) + elapsedMin) >= Number(row.max_minutes_mo);
+          }
+        }
+        if ((cap || overPlan) && !closed) {
+          log('límite de minutos alcanzado → cerrando llamada', { elapsedMin: Math.round(elapsedMin), reason: cap ? 'hard_cap' : 'plan_limit' });
+          if (limitTimer) { clearInterval(limitTimer); limitTimer = null; }
+          await say('Disculpa, tenemos que finalizar la llamada por ahora. Con gusto te contactamos para continuar. ¡Gracias!');
+          await speakChain;
+          cleanup();
+          if (ws.readyState === 1) ws.close();
+        }
+      } catch (e) { /* no tumbar la llamada si el chequeo falla */ }
+    }
+
     async function init(params) {
       const agentId  = params.agentId;
-      const tenantId = params.tenantId;
+      tenantId       = params.tenantId;
       const from     = params.from || 'unknown';
       const greeting = params.greeting || null;
 
@@ -386,6 +422,9 @@ async function mediaStreamRoutes(app) {
         ]);
         voiceId = res.voiceId;
         getFillers(voiceId).catch(() => {});
+        callStartedAt = Date.now();
+        // Watchdog de minutos: revisa cada 30s (uso previo + tiempo en curso).
+        limitTimer = setInterval(checkMinuteLimit, 30 * 1000);
         say(res.greetingText);
         armSilenceWatch();
       } catch (err) {
@@ -406,6 +445,7 @@ async function mediaStreamRoutes(app) {
       if (turnTimer) clearTimeout(turnTimer);
       if (silenceTimer) clearTimeout(silenceTimer);
       if (dgKeepAlive) clearInterval(dgKeepAlive);
+      if (limitTimer) clearInterval(limitTimer);
       if (currentAudioEnd) currentAudioEnd();
       try { dg && dg.requestClose && dg.requestClose(); } catch {}
       try { dg && dg.finish && dg.finish(); } catch {}
