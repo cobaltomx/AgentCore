@@ -164,6 +164,14 @@ async function appointmentsRoutes(app) {
       return reply.code(400).send({ error: `Status inválido. Válidos: ${validStatuses.join(', ')}` });
     }
 
+    // La cita debe existir y ser de este tenant → 404 limpio (antes daba 500
+    // porque cancelAppointment lanzaba excepción para una cita ajena).
+    const owned = await app.db.query(
+      'SELECT id FROM appointments WHERE id = $1 AND tenant_id = $2',
+      [req.params.id, req.tenant.id]
+    );
+    if (!owned.rows[0]) return reply.code(404).send({ error: 'Cita no encontrada' });
+
     if (status === 'cancelled') {
       await scheduling.cancelAppointment(req.params.id, req.tenant.id, reason);
     } else {

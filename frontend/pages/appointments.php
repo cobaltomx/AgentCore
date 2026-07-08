@@ -513,6 +513,13 @@ renderHead('Citas');
 <script>
 'use strict';
 
+// Escapa texto antes de insertarlo con innerHTML (evita XSS del propio input).
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
 // ── Estado global ─────────────────────────────────────────────
 let fcCalendar   = null;
 let activeApptId = null;
@@ -903,8 +910,8 @@ document.getElementById('form-nueva-cita').addEventListener('submit', async func
     tr.dataset.date   = dateISO;
     tr.innerHTML = `
       <td>
-        <div class="fw-semibold appt-name">${name}</div>
-        <small class="text-muted appt-phone">${phone ? '<i class="bx bx-phone me-1"></i>' + phone : ''}</small>
+        <div class="fw-semibold appt-name">${escHtml(name)}</div>
+        <small class="text-muted appt-phone">${phone ? '<i class="bx bx-phone me-1"></i>' + escHtml(phone) : ''}</small>
       </td>
       <td>
         <span class="fw-semibold">${dateS}</span>
