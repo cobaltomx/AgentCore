@@ -9,8 +9,9 @@
 > - Rentabilidad: **R1** (watchdog de minutos), **R2** (ROI vs. costo del plan), **R3** (trials),
 >   **R4** (alerta de margen negativo), **R5** (churn/inactividad), **R7** (upsell proactivo) ✅
 > - Usabilidad: **U2** (help-tips) ✅
-> - Quedan solo cosméticos menores (S5 código de estado 500→404, S6 self-XSS del admin) y
->   S7 (CSRF token, mitigado por SameSite) — bajo impacto, opcionales.
+> - **S5 (500→404) y S6 (self-XSS del admin) también resueltos** (commit `491a6a0`).
+> - Único pendiente: **S7** (token CSRF explícito) — documentado como deuda futura,
+>   ya mitigado por `SameSite=Lax`; el fix toca ~60 proxies, no se justifica hoy.
 
 ---
 
