@@ -50,16 +50,50 @@ async function deepgramBalance() {
   if (!key) return { provider: 'deepgram', label: 'Deepgram (voz STT/TTS)', status: 'unconfigured' };
   try {
     const headers = { Authorization: `Token ${key}` };
-    const projects = await (await fetch('https://api.deepgram.com/v1/projects', { headers })).json();
+    const projRes = await fetch('https://api.deepgram.com/v1/projects', { headers });
+    if (!projRes.ok) {
+      if (projRes.status === 401) return { provider: 'deepgram', label: 'Deepgram (voz STT/TTS)', status: 'error', detail: 'API key inválida' };
+      return { provider: 'deepgram', label: 'Deepgram (voz STT/TTS)', status: 'error', detail: `HTTP ${projRes.status}` };
+    }
+    const projects = await projRes.json();
     const pid = projects?.projects?.[0]?.project_id;
     if (!pid) return { provider: 'deepgram', label: 'Deepgram (voz STT/TTS)', status: 'error', detail: 'sin proyectos' };
-    const bal = await (await fetch(`https://api.deepgram.com/v1/projects/${pid}/balances`, { headers })).json();
-    const amount = (bal?.balances || []).reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
-    return {
-      provider: 'deepgram', label: 'Deepgram (voz STT/TTS)',
-      status: amount <= 1 ? 'out' : amount <= DEEPGRAM_LOW_USD ? 'low' : 'ok',
-      balance: amount, currency: 'USD',
-    };
+
+    const balRes = await fetch(`https://api.deepgram.com/v1/projects/${pid}/balances`, { headers });
+    if (balRes.ok) {
+      const bal = await balRes.json();
+      const amount = (bal?.balances || []).reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
+      return {
+        provider: 'deepgram', label: 'Deepgram (voz STT/TTS)',
+        status: amount <= 1 ? 'out' : amount <= DEEPGRAM_LOW_USD ? 'low' : 'ok',
+        balance: amount, currency: 'USD',
+      };
+    }
+
+    // Muchas cuentas no tienen el scope 'billing:read' para leer el saldo
+    // exacto (403 INSUFFICIENT_PERMISSIONS) aunque el servicio SÍ funcione.
+    // En ese caso, un canario funcional (síntesis mínima) es más confiable
+    // que interpretar el error como "sin saldo".
+    if (balRes.status === 403) {
+      const { synthesizeMulaw } = require('./tts-deepgram');
+      try {
+        const buf = await synthesizeMulaw('ok');
+        return {
+          provider: 'deepgram', label: 'Deepgram (voz STT/TTS)',
+          status: buf && buf.length > 0 ? 'ok' : 'error',
+          detail: 'saldo no visible (falta permiso billing:read), verificado con una sintesis de prueba',
+        };
+      } catch (synthErr) {
+        const msg = synthErr.message || '';
+        const outOfCredit = /insufficient|quota|credit|balance/i.test(msg);
+        return {
+          provider: 'deepgram', label: 'Deepgram (voz STT/TTS)',
+          status: outOfCredit ? 'out' : 'error',
+          detail: msg.slice(0, 120) || 'síntesis de prueba falló',
+        };
+      }
+    }
+    return { provider: 'deepgram', label: 'Deepgram (voz STT/TTS)', status: 'error', detail: `HTTP ${balRes.status}` };
   } catch (e) {
     return { provider: 'deepgram', label: 'Deepgram (voz STT/TTS)', status: 'error', detail: e.message?.slice(0, 120) };
   }
