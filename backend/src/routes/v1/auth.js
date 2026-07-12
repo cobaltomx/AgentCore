@@ -3,6 +3,7 @@
 const bcrypt = require('bcryptjs');
 const { z }  = require('zod');
 const { randomUUID } = require('crypto');
+const { isValidPassword, PASSWORD_POLICY_ERROR } = require('../../services/password-policy');
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -116,7 +117,7 @@ async function authRoutes(app) {
 
     if (new_password !== undefined) {
       if (!current_password) return reply.code(400).send({ error: 'Debes ingresar tu contraseña actual' });
-      if (new_password.length < 8) return reply.code(400).send({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+      if (!isValidPassword(new_password)) return reply.code(400).send({ error: PASSWORD_POLICY_ERROR });
 
       // Verificar contraseña actual
       const userRow = await app.db.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
@@ -203,7 +204,7 @@ async function authRoutes(app) {
   }, async (request, reply) => {
     const { token, password } = request.body || {};
     if (!token || !password) return reply.code(400).send({ error: 'Token y contraseña requeridos' });
-    if (password.length < 8) return reply.code(400).send({ error: 'La contraseña debe tener al menos 8 caracteres' });
+    if (!isValidPassword(password)) return reply.code(400).send({ error: PASSWORD_POLICY_ERROR });
 
     const userId = await app.redis.get(`pwreset:${token}`);
     if (!userId) return reply.code(400).send({ error: 'Token inválido o expirado' });

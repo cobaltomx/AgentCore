@@ -140,3 +140,33 @@ html[data-theme="dark"] .table-hover tbody tr:hover { background: rgba(255,255,2
 .dropdown-menu { border: 1px solid var(--ac-border); border-radius: var(--ac-radius); box-shadow: 0 8px 24px rgba(16,24,40,.10); }
 .toast, .alert { border-radius: var(--ac-radius); }
 ::selection { background: var(--ac-primary-soft); }
+
+/* ── Checklist de fuerza de contraseña (password-strength.js) ──────── */
+.pw-rules {
+  margin: .5rem 0 1rem;
+  padding: .75rem .9rem;
+  background: var(--ac-bg);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius);
+}
+.pw-rules-title { font-size: .82rem; font-weight: 600; color: var(--ac-text); margin-bottom: .4rem; }
+.pw-rules-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+.pw-rules-list li {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .82rem;
+  transition: color .15s ease;
+}
+.pw-rule-icon {
+  flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .65rem; line-height: 1;
+}
+.pw-rule-pending { color: var(--ac-text-muted); }
+.pw-rule-pending .pw-rule-icon { background: #fbeaea; color: #c53030; }
+.pw-rule-pending .pw-rule-icon::before { content: "\2715"; } /* × */
+.pw-rule-pass { color: #1f9d55; }
+.pw-rule-pass .pw-rule-icon { background: #e6f7ec; color: #1f9d55; }
+.pw-rule-pass .pw-rule-icon::before { content: "\2713"; } /* check */
+
+/* Dark mode */
+html[data-theme="dark"] .pw-rules, body.dark-style .pw-rules { background: var(--ac-surface); }

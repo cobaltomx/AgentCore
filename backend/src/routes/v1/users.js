@@ -2,11 +2,14 @@
 
 const bcrypt = require('bcryptjs');
 const { z }  = require('zod');
+const { isValidPassword, PASSWORD_POLICY_ERROR } = require('../../services/password-policy');
+
+const passwordField = z.string().refine(isValidPassword, { message: PASSWORD_POLICY_ERROR });
 
 const createUserSchema = z.object({
   name:       z.string().min(2).max(120),
   email:      z.string().email(),
-  password:   z.string().min(8),
+  password:   passwordField,
   role:       z.enum(['admin', 'user']).default('user'),
   avatar_url: z.string().max(500).optional().nullable(),
 });
@@ -15,7 +18,7 @@ const updateUserSchema = z.object({
   name:       z.string().min(2).max(120).optional(),
   role:       z.enum(['admin', 'user']).optional(),
   is_active:  z.boolean().optional(),
-  password:   z.string().min(8).optional(),
+  password:   passwordField.optional(),
   avatar_url: z.string().max(500).optional().nullable(),
 });
 

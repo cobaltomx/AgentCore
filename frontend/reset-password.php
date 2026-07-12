@@ -22,6 +22,7 @@ if (!$token) {
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="/assets/css/agentcore-theme.css"/>
   <style>
     body { font-family: 'Public Sans', sans-serif; background: #f5f5f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
     .auth-card { width: 100%; max-width: 420px; }
@@ -79,18 +80,12 @@ if (!$token) {
           <div class="mb-3">
             <label class="form-label fw-semibold">Nueva contraseña</label>
             <div class="input-group">
-              <input type="password" id="newPass" class="form-control" placeholder="Mín. 8 caracteres"
-                     oninput="checkStrength()" required/>
+              <input type="password" id="newPass" class="form-control" placeholder="Mín. 8 caracteres" required/>
               <button class="btn btn-outline-secondary" type="button" onclick="togglePass('newPass', this)">
                 <i class="bx bx-hide"></i>
               </button>
             </div>
-            <div class="mt-2">
-              <div class="progress" style="height:4px">
-                <div id="strengthBar" class="progress-bar strength-bar" style="width:0%"></div>
-              </div>
-              <small id="strengthLabel" class="text-muted"></small>
-            </div>
+            <div id="pwRules" class="mt-2"></div>
           </div>
           <div class="mb-4">
             <label class="form-label fw-semibold">Confirmar contraseña</label>
@@ -121,6 +116,7 @@ if (!$token) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/js/password-strength.js"></script>
 <script>
 const TOKEN = <?= json_encode($token) ?>;
 
@@ -142,29 +138,8 @@ const TOKEN = <?= json_encode($token) ?>;
   }
 })();
 
-// ── Strength meter ─────────────────────────────────────────────────────────
-function checkStrength() {
-  const pw  = document.getElementById('newPass').value;
-  const bar = document.getElementById('strengthBar');
-  const lbl = document.getElementById('strengthLabel');
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-
-  const levels = [
-    { w: '0%',   cls: '',                  text: '' },
-    { w: '25%',  cls: 'bg-danger',         text: 'Muy débil' },
-    { w: '50%',  cls: 'bg-warning',        text: 'Débil' },
-    { w: '75%',  cls: 'bg-info',           text: 'Aceptable' },
-    { w: '100%', cls: 'bg-success',        text: 'Fuerte ✓' },
-  ];
-  const lvl = levels[Math.min(score, 4)];
-  bar.style.width = lvl.w;
-  bar.className   = `progress-bar strength-bar ${lvl.cls}`;
-  lbl.textContent = lvl.text;
-}
+// ── Checklist de fuerza (password-strength.js) ──────────────────────────────
+const pwStrength = initPasswordStrength({ inputId: 'newPass', rulesContainerId: 'pwRules' });
 
 // ── Toggle password ────────────────────────────────────────────────────────
 function togglePass(id, btn) {
@@ -184,8 +159,8 @@ document.getElementById('resetForm').addEventListener('submit', async function(e
   const txt = document.getElementById('btnText');
   const spn = document.getElementById('btnSpin');
 
-  if (pw1.length < 8) { showAlert('La contraseña debe tener al menos 8 caracteres.', 'warning'); return; }
-  if (pw1 !== pw2)     { showAlert('Las contraseñas no coinciden.', 'warning'); return; }
+  if (!pwStrength.isValid()) { showAlert('La contraseña no cumple con los requisitos mínimos.', 'warning'); return; }
+  if (pw1 !== pw2)            { showAlert('Las contraseñas no coinciden.', 'warning'); return; }
 
   btn.disabled = true;
   txt.textContent = 'Guardando…';

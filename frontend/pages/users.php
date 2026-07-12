@@ -134,6 +134,8 @@ renderHead('Usuarios');
 
 </div><?php renderFooter(); ?>
 
+<script src="/assets/js/password-strength.js"></script>
+
 <!-- ── Modal: Nuevo usuario ──────────────────────────────────── -->
 <div class="modal fade" id="modalNewUser" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -167,7 +169,8 @@ renderHead('Usuarios');
                 <i class="bx bx-refresh"></i>
               </button>
             </div>
-            <small class="text-muted">Mínimo 8 caracteres · Comparte con el usuario</small>
+            <small class="text-muted">Comparte con el usuario</small>
+            <div id="new-password-rules" class="mt-1"></div>
           </div>
           <!-- Alerta contraseña generada -->
           <div class="col-12 d-none" id="pw-alert">
@@ -246,6 +249,7 @@ renderHead('Usuarios');
                 <i class="bx bx-refresh"></i>
               </button>
             </div>
+            <div id="edit-password-rules" class="mt-1"></div>
           </div>
           <!-- Zona de error -->
           <div class="col-12 d-none" id="edit-user-error">
@@ -298,10 +302,21 @@ document.getElementById('user-avatar-remove').addEventListener('click', () => {
   setUserAvatarPreview(null);
 });
 
+// ── Checklist de fuerza (password-strength.js) ──────────────────────────────
+initPasswordStrength({ inputId: 'new-password',  rulesContainerId: 'new-password-rules' });
+initPasswordStrength({ inputId: 'edit-password', rulesContainerId: 'edit-password-rules', hideWhenEmpty: true });
+
 // ── Helpers ───────────────────────────────────────────────────
 function randomPassword(length = 12) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
-  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  // Garantiza al menos 1 de cada categoría (mayúscula/minúscula/número/especial)
+  // para que SIEMPRE cumpla el checklist, sin depender del azar.
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ', lower = 'abcdefghjkmnpqrstuvwxyz';
+  const digit = '23456789', special = '!@#$%*?';
+  const all = upper + lower + digit + special;
+  const pick = (s) => s[Math.floor(Math.random() * s.length)];
+  const required = [pick(upper), pick(lower), pick(digit), pick(special)];
+  const rest = Array.from({ length: Math.max(0, length - required.length) }, () => pick(all));
+  return required.concat(rest).sort(() => Math.random() - 0.5).join('');
 }
 function showModalError(zoneId, msgId, msg) {
   document.getElementById(msgId).textContent = msg;
@@ -336,12 +351,16 @@ function activeBadgeHtml(active) {
 // ── Contraseña ────────────────────────────────────────────────
 function generatePassword() {
   const pw = randomPassword();
-  document.getElementById('new-password').value     = pw;
+  const input = document.getElementById('new-password');
+  input.value = pw;
+  input.dispatchEvent(new Event('input', { bubbles: true })); // refresca el checklist
   document.getElementById('pw-display').textContent = pw;
   document.getElementById('pw-alert').classList.remove('d-none');
 }
 function generateEditPassword() {
-  document.getElementById('edit-password').value = randomPassword();
+  const input = document.getElementById('edit-password');
+  input.value = randomPassword();
+  input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 function copyPassword() {
   const pw = document.getElementById('new-password').value;
@@ -373,8 +392,8 @@ document.getElementById('btnCreateUser').addEventListener('click', async () => {
 
   if (!name)               { showModalError('new-user-error','new-user-error-msg','El nombre es obligatorio'); return; }
   if (!email)              { showModalError('new-user-error','new-user-error-msg','El correo es obligatorio'); return; }
-  if (!password)           { showModalError('new-user-error','new-user-error-msg','La contraseña es obligatoria'); return; }
-  if (password.length < 8) { showModalError('new-user-error','new-user-error-msg','La contraseña debe tener al menos 8 caracteres'); return; }
+  if (!password)                     { showModalError('new-user-error','new-user-error-msg','La contraseña es obligatoria'); return; }
+  if (!passwordMeetsRules(password)) { showModalError('new-user-error','new-user-error-msg','La contraseña no cumple con los requisitos mínimos'); return; }
 
   const btn = document.getElementById('btnCreateUser');
   btn.disabled = true;
@@ -457,6 +476,7 @@ document.getElementById('btnUpdateUser').addEventListener('click', async () => {
   const password = document.getElementById('edit-password').value.trim();
 
   if (!name) { showModalError('edit-user-error','edit-user-error-msg','El nombre es obligatorio'); return; }
+  if (password && !passwordMeetsRules(password)) { showModalError('edit-user-error','edit-user-error-msg','La contraseña no cumple con los requisitos mínimos'); return; }
 
   const payload = { id, name, role };
   if (password) payload.password = password;

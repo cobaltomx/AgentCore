@@ -1,6 +1,7 @@
 'use strict';
 
 const bcrypt = require('bcryptjs');
+const { isValidPassword, PASSWORD_POLICY_ERROR } = require('../../services/password-policy');
 
 // Fuente única de verdad de features (catálogo + cálculo plan ∪ overrides).
 const { FEATURE_CATALOG, computeEffective: effectiveFeatures } = require('../../services/features');
@@ -114,6 +115,7 @@ async function superadminRoutes(app) {
     const { name, email, password, role = 'user' } = request.body || {};
 
     if (!email || !password) return reply.code(400).send({ error: 'email y password son requeridos' });
+    if (!isValidPassword(password)) return reply.code(400).send({ error: PASSWORD_POLICY_ERROR });
 
     const emailExists = await app.db.query(
       'SELECT id FROM users WHERE email = $1',
@@ -153,8 +155,8 @@ async function superadminRoutes(app) {
 
     // Reset de contraseña (se hashea; nunca se guarda en claro)
     if (typeof body.password === 'string' && body.password.length) {
-      if (body.password.length < 8) {
-        return reply.code(400).send({ error: 'La contraseña debe tener al menos 8 caracteres' });
+      if (!isValidPassword(body.password)) {
+        return reply.code(400).send({ error: PASSWORD_POLICY_ERROR });
       }
       updates.push(`password_hash = $${idx++}`);
       values.push(await bcrypt.hash(body.password, 12));
@@ -202,6 +204,7 @@ async function superadminRoutes(app) {
     if (!name || !slug || !adminEmail || !adminPassword) {
       return reply.code(400).send({ error: 'name, slug, adminEmail y adminPassword son requeridos' });
     }
+    if (!isValidPassword(adminPassword)) return reply.code(400).send({ error: PASSWORD_POLICY_ERROR });
 
     // Límites desde la tabla de planes (la define el Super Admin); override opcional.
     const planRow = (await app.db.query(

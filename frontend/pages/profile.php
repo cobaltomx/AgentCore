@@ -217,16 +217,9 @@ renderHead('Mi perfil');
                 <label class="form-label fw-semibold">Nueva contraseña</label>
                 <div class="input-group">
                   <input type="password" class="form-control" id="pp-new"
-                         placeholder="Mín. 8 caracteres" autocomplete="new-password"
-                         oninput="checkStrength()"/>
+                         placeholder="Mín. 8 caracteres" autocomplete="new-password"/>
                   <button class="btn btn-outline-secondary" type="button"
                     onclick="togglePass('pp-new', this)"><i class="bx bx-hide"></i></button>
-                </div>
-                <div class="mt-1">
-                  <div class="progress" style="height:3px">
-                    <div id="strengthBar" class="progress-bar" style="width:0%;transition:width .3s,background .3s"></div>
-                  </div>
-                  <small id="strengthLabel" class="text-muted"></small>
                 </div>
               </div>
               <div class="col-md-6">
@@ -238,6 +231,7 @@ renderHead('Mi perfil');
                     onclick="togglePass('pp-confirm', this)"><i class="bx bx-hide"></i></button>
                 </div>
               </div>
+              <div class="col-12"><div id="pp-rules"></div></div>
             </div>
             <div class="d-flex justify-content-end mt-3">
               <button type="submit" class="btn btn-warning" id="savePassBtn">
@@ -276,6 +270,7 @@ renderHead('Mi perfil');
 
 </div><?php renderFooter(); ?>
 
+<script src="/assets/js/password-strength.js"></script>
 <script>
 // ── Detectar navegador ────────────────────────────────────────────────────
 (function() {
@@ -297,28 +292,8 @@ function togglePass(id, btn) {
   else { inp.type = 'password'; icon.className = 'bx bx-hide'; }
 }
 
-// ── Strength meter ─────────────────────────────────────────────────────────
-function checkStrength() {
-  const pw  = document.getElementById('pp-new').value;
-  const bar = document.getElementById('strengthBar');
-  const lbl = document.getElementById('strengthLabel');
-  let score = 0;
-  if (pw.length >= 8)          score++;
-  if (/[A-Z]/.test(pw))        score++;
-  if (/[0-9]/.test(pw))        score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  const levels = [
-    { w:'0%',   cls:'',           text:'' },
-    { w:'25%',  cls:'bg-danger',  text:'Muy débil' },
-    { w:'50%',  cls:'bg-warning', text:'Débil' },
-    { w:'75%',  cls:'bg-info',    text:'Aceptable' },
-    { w:'100%', cls:'bg-success', text:'Fuerte ✓' },
-  ];
-  const lvl = levels[Math.min(score, 4)];
-  bar.style.width = lvl.w;
-  bar.className = `progress-bar ${lvl.cls}`;
-  lbl.textContent = lvl.text;
-}
+// ── Checklist de fuerza (password-strength.js) ──────────────────────────────
+const profilePwStrength = initPasswordStrength({ inputId: 'pp-new', rulesContainerId: 'pp-rules' });
 
 // ── Avatar upload ─────────────────────────────────────────────────────────
 document.getElementById('avatarFileInput').addEventListener('change', async function(e) {
@@ -398,9 +373,9 @@ document.getElementById('profilePassForm').addEventListener('submit', async func
   const newPw   = document.getElementById('pp-new').value;
   const confirm = document.getElementById('pp-confirm').value;
 
-  if (!current)         { showToast('Ingresa tu contraseña actual', 'warning');          return; }
-  if (newPw.length < 8) { showToast('La nueva contraseña debe tener al menos 8 caracteres', 'warning'); return; }
-  if (newPw !== confirm) { showToast('Las contraseñas no coinciden', 'warning');          return; }
+  if (!current)                       { showToast('Ingresa tu contraseña actual', 'warning');            return; }
+  if (!profilePwStrength.isValid())   { showToast('La nueva contraseña no cumple con los requisitos mínimos', 'warning'); return; }
+  if (newPw !== confirm)              { showToast('Las contraseñas no coinciden', 'warning');             return; }
   if (newPw === current) { showToast('La nueva contraseña debe ser diferente a la actual', 'warning'); return; }
 
   const btn = document.getElementById('savePassBtn');
