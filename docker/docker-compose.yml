@@ -65,6 +65,10 @@ services:
     environment:
       API_BASE_URL: http://backend:3000/api/v1
       APP_ENV: development
+      # Solo claves PÚBLICAS (nunca secrets) — el botón de Google y el
+      # captcha del navegador las necesitan del lado del frontend.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
     ports:
       - "8080:8080"
     volumes:

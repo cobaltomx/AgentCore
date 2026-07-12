@@ -52,7 +52,12 @@ async function authRoutes(app) {
       return reply.code(401).send({ error: 'Credenciales incorrectas' });
     }
 
-    // Actualizar last_login
+    return reply.code(200).send(await issueSession(app, user));
+  });
+
+  // Emite JWT + sesión Redis + payload de usuario — comparte esta lógica
+  // /login (password) y /google (OAuth) para no duplicarla ni divergir.
+  async function issueSession(app, user) {
     await app.db.query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
 
     const token = app.jwt.sign(
@@ -65,14 +70,13 @@ async function authRoutes(app) {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
-    // Guardar sesión en Redis
     await app.redis.setex(
       `session:${user.id}`,
       7 * 24 * 3600,
       JSON.stringify({ user_id: user.id, tenant_id: user.tenant_id })
     );
 
-    return reply.code(200).send({
+    return {
       token,
       user: {
         id:              user.id,
@@ -95,7 +99,52 @@ async function authRoutes(app) {
           setup_steps:     user.setup_steps ?? {},
         },
       },
-    });
+    };
+  }
+
+  // POST /api/v1/auth/google — "Iniciar sesión con Google". Vincula a una
+  // cuenta YA EXISTENTE por email (este SaaS no tiene auto-registro: los
+  // usuarios los da de alta un admin/superadmin dentro de un tenant). Si el
+  // email de Google no coincide con ningún usuario, NO crea cuenta — pide
+  // que solicite acceso a su administrador.
+  app.post('/google', {
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+  }, async (request, reply) => {
+    const { credential } = request.body || {};
+    if (!credential) return reply.code(400).send({ error: 'Falta el token de Google' });
+
+    const { isConfigured, verifyGoogleToken } = require('../../services/google-auth');
+    if (!isConfigured()) return reply.code(503).send({ error: 'Inicio de sesión con Google no disponible' });
+
+    const g = await verifyGoogleToken(credential);
+    if (!g || !g.emailVerified) return reply.code(401).send({ error: 'Token de Google inválido' });
+
+    const result = await app.db.query(
+      `SELECT u.id, u.tenant_id, u.email, u.name, u.role, u.is_active, u.avatar_url, u.terms_accepted_at,
+              t.slug as tenant_slug, t.name as tenant_name, t.plan, t.status as tenant_status,
+              t.max_agents, t.max_minutes_mo, t.minutes_used_mo, t.settings as tenant_settings,
+              t.avatar_url as tenant_avatar_url, t.is_ready, t.setup_steps
+       FROM users u
+       JOIN tenants t ON t.id = u.tenant_id
+       WHERE LOWER(u.email) = $1`,
+      [g.email]
+    );
+    const user = result.rows[0];
+
+    if (!user || !user.is_active) {
+      return reply.code(404).send({
+        error: `No existe una cuenta con ${g.email}. Pide a tu administrador que te dé de alta primero.`,
+      });
+    }
+    if (user.tenant_status !== 'active' && user.tenant_status !== 'trial') {
+      return reply.code(403).send({ error: 'Cuenta suspendida. Contacta soporte.' });
+    }
+
+    // Vincular el google_id la primera vez (no bloquea el login si falla).
+    await app.db.query('UPDATE users SET google_id = $1 WHERE id = $2 AND google_id IS NULL', [g.googleId, user.id])
+      .catch(() => {});
+
+    return reply.code(200).send(await issueSession(app, user));
   });
 
   // PATCH /auth/me — actualizar perfil propio (nombre, password, avatar_url)

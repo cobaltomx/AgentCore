@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kfP73bQa6f3avcKlCA98krvdkvEGjjRPtrQ71MK2HUheyOBJrjReHZspQIBnpSD
+\restrict IoQZAWUbVqqtHHNg5KlEbGwsVDVDoZvr8VGAjZY75ZpzefWcL8zTu6Q0ICG7HXF
 
 -- Dumped from database version 16.14 (Debian 16.14-1.pgdg12+1)
 -- Dumped by pg_dump version 16.14 (Debian 16.14-1.pgdg12+1)
@@ -1022,7 +1022,8 @@ CREATE TABLE public.users (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     avatar_url text,
-    terms_accepted_at timestamp with time zone
+    terms_accepted_at timestamp with time zone,
+    google_id text
 );
 
 
@@ -1947,6 +1948,13 @@ CREATE UNIQUE INDEX uniq_leads_tenant_phone ON public.leads USING btree (tenant_
 
 
 --
+-- Name: uniq_users_google_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uniq_users_google_id ON public.users USING btree (google_id) WHERE (google_id IS NOT NULL);
+
+
+--
 -- Name: agents trg_agents_updated; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2690,5 +2698,5 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kfP73bQa6f3avcKlCA98krvdkvEGjjRPtrQ71MK2HUheyOBJrjReHZspQIBnpSD
+\unrestrict IoQZAWUbVqqtHHNg5KlEbGwsVDVDoZvr8VGAjZY75ZpzefWcL8zTu6Q0ICG7HXF
 

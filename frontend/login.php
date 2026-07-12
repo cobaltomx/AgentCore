@@ -219,6 +219,11 @@ $forbidden  = isset($_GET['forbidden']);
         <span id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
       </button>
 
+      <?php if (GOOGLE_CLIENT_ID !== ''): ?>
+      <div class="divider-line my-3">o</div>
+      <div id="googleBtnContainer" class="d-flex justify-content-center"></div>
+      <?php endif; ?>
+
     </form>
 
     <?php if (!$tenantSlug): ?>
@@ -306,6 +311,40 @@ function showAlert(msg, type) {
   const icon = type === 'danger' ? 'bx-error-circle' : type === 'warning' ? 'bx-info-circle' : 'bx-check-circle';
   el.innerHTML = `<i class="bx ${icon} flex-shrink-0"></i><span>${msg}</span>`;
 }
+
+// ── Iniciar sesión con Google (Google Identity Services) ────────────────────
+async function handleGoogleCredential(response) {
+  try {
+    const res  = await fetch('/api/auth-google.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      window.location.href = data.redirect || '/index.php';
+    } else {
+      showAlert(data.error || 'No se pudo iniciar sesión con Google.', 'danger');
+    }
+  } catch {
+    showAlert('Error de conexión. Intenta nuevamente.', 'danger');
+  }
+}
 </script>
+<?php if (GOOGLE_CLIENT_ID !== ''): ?>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+window.onload = function () {
+  if (!window.google?.accounts?.id) return;
+  google.accounts.id.initialize({
+    client_id: <?= json_encode(GOOGLE_CLIENT_ID) ?>,
+    callback: handleGoogleCredential,
+  });
+  google.accounts.id.renderButton(document.getElementById('googleBtnContainer'), {
+    theme: 'outline', size: 'large', text: 'signin_with', width: 320,
+  });
+};
+</script>
+<?php endif; ?>
 </body>
 </html>

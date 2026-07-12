@@ -12,6 +12,11 @@ define('BACKEND_ROOT', preg_replace('#/api/v1/?$#', '', API_BASE));
 define('APP_VERSION', '0.4.0');
 define('APP_NAME',    'AgentCore');
 
+// ── Login con Google / CAPTCHA (claves PÚBLICAS, seguras de exponer) ──
+// Vacío = la funcionalidad se oculta (degradación elegante, ver login.php).
+define('GOOGLE_CLIENT_ID',   getenv('GOOGLE_CLIENT_ID')   ?: '');
+define('RECAPTCHA_SITE_KEY', getenv('RECAPTCHA_SITE_KEY') ?: '');
+
 // ── Widget de chat web (lo embeben los clientes en SUS sitios) ──
 // En prod define estas env vars con tu dominio público; el default es para dev.
 //   WIDGET_PUBLIC_URL → URL del script que el cliente pega en su sitio.
@@ -476,4 +481,24 @@ function channelIcon(string $channel): string {
         'sms'      => '<i class="bx bx-message text-warning"></i>',
     ];
     return $icons[$channel] ?? '<i class="bx bx-radio-circle"></i>';
+}
+
+/**
+ * Guarda la sesión a partir de la respuesta {token,user} del backend y
+ * calcula a dónde redirigir. Compartido por auth-login.php y auth-google.php
+ * para no duplicar esta lógica (onboarding, términos, etc.).
+ */
+function establishSession(array $data): array {
+    $_SESSION['jwt_token']       = $data['token'];
+    $_SESSION['user']            = $data['user'];
+    $_SESSION['tenant']          = $data['user']['tenant'];
+    $_SESSION['terms_accepted']  = !empty($data['user']['terms_accepted']);
+
+    $tenant   = $data['user']['tenant'];
+    $settings = $tenant['settings'] ?? [];
+    $role     = $data['user']['role'] ?? 'user';
+    $needsOnboarding = in_array($role, ['admin', 'superadmin'])
+        && empty($settings['onboarding_completed']);
+
+    return ['ok' => true, 'redirect' => $needsOnboarding ? '/onboarding.php' : '/index.php'];
 }

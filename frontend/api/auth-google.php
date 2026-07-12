@@ -1,7 +1,8 @@
 <?php
 /**
- * Proxy de login — POST /api/auth-login.php
- * Recibe { email, password } → llama al backend → guarda sesión → devuelve JSON
+ * Proxy de "Iniciar sesión con Google" — POST /api/auth-google.php
+ * Recibe { credential } (ID token de Google Identity Services) → lo manda
+ * al backend para verificar → guarda sesión igual que un login normal.
  */
 require_once __DIR__ . '/../includes/config.php';
 
@@ -12,21 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$body     = json_decode(file_get_contents('php://input'), true);
-$email    = trim($body['email']    ?? '');
-$password = trim($body['password'] ?? '');
+$body       = json_decode(file_get_contents('php://input'), true);
+$credential = trim($body['credential'] ?? '');
 
-if (!$email || !$password) {
-    echo json_encode(['ok' => false, 'error' => 'Por favor ingresa tu correo y contraseña.']);
+if (!$credential) {
+    echo json_encode(['ok' => false, 'error' => 'Falta el token de Google.']);
     exit;
 }
 
-// Llamar al backend
-$ch = curl_init(API_BASE . '/auth/login');
+$ch = curl_init(API_BASE . '/auth/google');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => json_encode(['email' => $email, 'password' => $password]),
+    CURLOPT_POSTFIELDS     => json_encode(['credential' => $credential]),
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Accept: application/json'],
     CURLOPT_TIMEOUT        => 10,
     CURLOPT_SSL_VERIFYPEER => APP_ENV === 'production',
@@ -39,7 +38,7 @@ curl_close($ch);
 $data = json_decode($body, true) ?? [];
 
 if ($status !== 200 || empty($data['token'])) {
-    $error = $data['error'] ?? 'Credenciales incorrectas.';
+    $error = $data['error'] ?? 'No se pudo iniciar sesión con Google.';
     echo json_encode(['ok' => false, 'error' => $error]);
     exit;
 }
