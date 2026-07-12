@@ -63,8 +63,12 @@ class CatalogService {
       return (await this.db.query(sql, params)).rows;
     }
 
-    // El "texto buscable" de cada producto
-    const HAY = `(coalesce(name,'')||' '||coalesce(description,'')||' '||coalesce(category,''))`;
+    // El "texto buscable" de cada producto, normalizado (minúsculas + SIN
+    // acentos) con translate() nativo — sin depender de la extensión unaccent
+    // (no instalada). Los tokens del query YA vienen sin acentos (_tokenizeQuery
+    // los normaliza), así que sin esto "Querétaro"/"Zibatá" en la BD nunca
+    // matcheaban una búsqueda escrita "queretaro"/"zibata" (típico en México).
+    const HAY = `translate(lower(coalesce(name,'')||' '||coalesce(description,'')||' '||coalesce(category,'')), 'áéíóúñÁÉÍÓÚÑ', 'aeiounAEIOUN')`;
 
     // 1) AND: todos los tokens presentes (resultado preciso)
     {
