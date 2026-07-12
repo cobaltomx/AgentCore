@@ -15,8 +15,9 @@ curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
     CURLOPT_POSTFIELDS     => json_encode([
-        'token'    => $body['token']    ?? '',
-        'password' => $body['password'] ?? '',
+        'token'           => $body['token']    ?? '',
+        'password'        => $body['password'] ?? '',
+        'recaptcha_token' => $body['recaptcha_token'] ?? '',
     ]),
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Accept: application/json'],
     CURLOPT_TIMEOUT        => 10,

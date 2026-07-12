@@ -12,9 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$body     = json_decode(file_get_contents('php://input'), true);
-$email    = trim($body['email']    ?? '');
-$password = trim($body['password'] ?? '');
+$body           = json_decode(file_get_contents('php://input'), true);
+$email          = trim($body['email']    ?? '');
+$password       = trim($body['password'] ?? '');
+$recaptchaToken = trim($body['recaptcha_token'] ?? '');
 
 if (!$email || !$password) {
     echo json_encode(['ok' => false, 'error' => 'Por favor ingresa tu correo y contraseña.']);
@@ -26,7 +27,7 @@ $ch = curl_init(API_BASE . '/auth/login');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => json_encode(['email' => $email, 'password' => $password]),
+    CURLOPT_POSTFIELDS     => json_encode(['email' => $email, 'password' => $password, 'recaptcha_token' => $recaptchaToken]),
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Accept: application/json'],
     CURLOPT_TIMEOUT        => 10,
     CURLOPT_SSL_VERIFYPEER => APP_ENV === 'production',

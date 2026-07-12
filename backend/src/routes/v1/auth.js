@@ -23,6 +23,10 @@ async function authRoutes(app) {
       return reply.code(400).send({ error: 'Datos inválidos', details: parsed.error.flatten() });
     }
 
+    const { verifyRecaptcha } = require('../../services/recaptcha');
+    const captcha = await verifyRecaptcha(request.body?.recaptcha_token, 'login');
+    if (!captcha.ok) return reply.code(400).send({ error: 'Verificación de seguridad fallida. Intenta de nuevo.' });
+
     const { email, password } = parsed.data;
 
     const result = await app.db.query(
@@ -204,6 +208,10 @@ async function authRoutes(app) {
     const { email } = request.body || {};
     if (!email) return reply.code(400).send({ error: 'Email requerido' });
 
+    const { verifyRecaptcha } = require('../../services/recaptcha');
+    const captcha = await verifyRecaptcha(request.body?.recaptcha_token, 'forgot_password');
+    if (!captcha.ok) return reply.code(400).send({ error: 'Verificación de seguridad fallida. Intenta de nuevo.' });
+
     const result = await app.db.query(
       'SELECT id, name, email FROM users WHERE LOWER(email) = LOWER($1) AND is_active = true',
       [email]
@@ -253,6 +261,11 @@ async function authRoutes(app) {
   }, async (request, reply) => {
     const { token, password } = request.body || {};
     if (!token || !password) return reply.code(400).send({ error: 'Token y contraseña requeridos' });
+
+    const { verifyRecaptcha } = require('../../services/recaptcha');
+    const captcha = await verifyRecaptcha(request.body?.recaptcha_token, 'reset_password');
+    if (!captcha.ok) return reply.code(400).send({ error: 'Verificación de seguridad fallida. Intenta de nuevo.' });
+
     if (!isValidPassword(password)) return reply.code(400).send({ error: PASSWORD_POLICY_ERROR });
 
     const userId = await app.redis.get(`pwreset:${token}`);

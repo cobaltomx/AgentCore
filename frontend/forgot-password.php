@@ -107,6 +107,11 @@ if (isLoggedIn()) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<?php if (RECAPTCHA_SITE_KEY !== ''): ?>
+<script>window.RECAPTCHA_SITE_KEY = <?= json_encode(RECAPTCHA_SITE_KEY) ?>;</script>
+<script src="https://www.google.com/recaptcha/api.js?render=<?= urlencode(RECAPTCHA_SITE_KEY) ?>"></script>
+<?php endif; ?>
+<script src="/assets/js/recaptcha.js"></script>
 <script>
 let currentResetLink = '';
 
@@ -126,10 +131,11 @@ document.getElementById('forgotForm').addEventListener('submit', async function(
   document.getElementById('alertBox').classList.add('d-none');
 
   try {
+    const recaptcha_token = await getRecaptchaToken('forgot_password');
     const res  = await fetch('/api/auth-forgot.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, recaptcha_token }),
     });
     const data = await res.json();
 

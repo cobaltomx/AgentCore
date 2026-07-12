@@ -8,14 +8,15 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
-$body  = json_decode(file_get_contents('php://input'), true);
-$email = trim($body['email'] ?? '');
+$body           = json_decode(file_get_contents('php://input'), true);
+$email          = trim($body['email'] ?? '');
+$recaptchaToken = trim($body['recaptcha_token'] ?? '');
 
 $ch = curl_init(API_BASE . '/auth/forgot-password');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => json_encode(['email' => $email]),
+    CURLOPT_POSTFIELDS     => json_encode(['email' => $email, 'recaptcha_token' => $recaptchaToken]),
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Accept: application/json'],
     CURLOPT_TIMEOUT        => 10,
     CURLOPT_SSL_VERIFYPEER => APP_ENV === 'production',

@@ -117,6 +117,11 @@ if (!$token) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/assets/js/password-strength.js"></script>
+<?php if (RECAPTCHA_SITE_KEY !== ''): ?>
+<script>window.RECAPTCHA_SITE_KEY = <?= json_encode(RECAPTCHA_SITE_KEY) ?>;</script>
+<script src="https://www.google.com/recaptcha/api.js?render=<?= urlencode(RECAPTCHA_SITE_KEY) ?>"></script>
+<?php endif; ?>
+<script src="/assets/js/recaptcha.js"></script>
 <script>
 const TOKEN = <?= json_encode($token) ?>;
 
@@ -167,10 +172,11 @@ document.getElementById('resetForm').addEventListener('submit', async function(e
   spn.classList.remove('d-none');
 
   try {
+    const recaptcha_token = await getRecaptchaToken('reset_password');
     const res  = await fetch('/api/auth-reset.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: TOKEN, password: pw1 }),
+      body: JSON.stringify({ token: TOKEN, password: pw1, recaptcha_token }),
     });
     const data = await res.json();
 
